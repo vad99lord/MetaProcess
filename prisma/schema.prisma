@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db/MetaProcess.db"
+}
+
+model Directory {
+  id       Int    @id @default(autoincrement())
+  name     String
+  fullPath String
+  files     File[]
+  edges    Edge[]
+  vertices Vertex[]
+
+  @@unique([name, fullPath], name: "autoindex_Directory_1")
+  @@index([name], name: "dir_name")
+}
+
+model Edge {
+  id          Int     @id @default(autoincrement())
+  startID     Int
+  endID       Int
+  name        String
+  inMeta      Boolean @default(false)
+  endVertex   Vertex  @relation("Edge_endIDToVertex", fields: [endID], references: [id])
+  startVertex Vertex  @relation("Edge_startIDToVertex", fields: [startID], references: [id])
+  files    File[]
+  directories Directory[]
+}
+
+model File {
+  id        Int        @id @default(autoincrement())
+  name      String
+  fullPath  String
+  dirId     Int?
+  directory Directory? @relation(fields: [dirId], references: [id])
+  edges    Edge[]
+  vertices Vertex[]
+
+  @@unique([name, dirId], name: "autoindex_File_2")
+  @@unique([name, fullPath], name: "autoindex_File_1")
+  @@index([name], name: "file_name")
+}
+
+model Vertex {
+  id         Int     @id @default(autoincrement())
+  name       String
+  meta       Boolean @default(false)
+  endEdges   Edge[]  @relation("Edge_endIDToVertex")
+  startEdges Edge[]  @relation("Edge_startIDToVertex")
+  files    File[]
+  directories Directory[]
+}

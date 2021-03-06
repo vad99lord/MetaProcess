@@ -1,0 +1,22 @@
+{
+  "name": "script",
+  "license": "MIT",
+  "main": "dist/src/app/main.js",
+  "devDependencies": {
+    "prisma": "2.17.0",
+    "ts-node": "9.1.1",
+    "typescript": "4.1.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron ."
+  },
+  "dependencies": {
+    "@prisma/client": "2.17.0",
+    "@types/node": "13.13.45",
+    "electron": "^11.3.0"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  }
+}
