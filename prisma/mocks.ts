@@ -39,23 +39,23 @@ export const dirWithFiles = [
 
 export const vertices = [
     {
-        id: 1,
+        id: "1",
         name: "stage 1",
     },
     {
-        id: 2,
+        id: "2",
         name: "stage 2",
     },
     {
-        id: 3,
+        id: "3",
         name: "stage 3",
     },
     {
-        id: 4,
+        id: "4",
         name: "stage 4",
     },
     {
-        id: 5,
+        id: "5",
         name: "meta stage",
         meta: true,
     },
@@ -66,12 +66,12 @@ export const edges = [
         name: "1 - 2",
         startVertex: {
             connect: {
-                id : 1
+                id : "1"
             }
         },
         endVertex: {
             connect: {
-                id : 2
+                id : "2"
             }
         },
     },
@@ -79,12 +79,12 @@ export const edges = [
         name: "2 - 3",
         startVertex: {
             connect: {
-                id : 2
+                id : "2"
             }
         },
         endVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
     },
@@ -92,12 +92,12 @@ export const edges = [
         name: "3 - 4",
         startVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
         endVertex: {
             connect: {
-                id : 4
+                id : "4"
             }
         },
     },
@@ -105,12 +105,12 @@ export const edges = [
         name: "meta - 1",
         startVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
         endVertex: {
             connect: {
-                id : 4
+                id : "4"
             }
         },
     },
@@ -118,12 +118,12 @@ export const edges = [
         name: "meta - 2",
         startVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
         endVertex: {
             connect: {
-                id : 4
+                id : "4"
             }
         },
     },
@@ -131,12 +131,12 @@ export const edges = [
         name: "meta - 3",
         startVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
         endVertex: {
             connect: {
-                id : 4
+                id : "4"
             }
         },
     },
@@ -144,12 +144,12 @@ export const edges = [
         name: "meta - 4",
         startVertex: {
             connect: {
-                id : 3
+                id : "3"
             }
         },
         endVertex: {
             connect: {
-                id : 4
+                id : "4"
             }
         },
     },

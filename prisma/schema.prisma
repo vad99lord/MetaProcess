@@ -20,9 +20,9 @@ model Directory {
 }
 
 model Edge {
-  id          Int     @id @default(autoincrement())
-  startID     Int
-  endID       Int
+  id          String     @id @default(cuid())
+  startID     String
+  endID       String
   name        String
   inMeta      Boolean @default(false)
   endVertex   Vertex  @relation("Edge_endIDToVertex", fields: [endID], references: [id])
@@ -46,7 +46,7 @@ model File {
 }
 
 model Vertex {
-  id         Int     @id @default(autoincrement())
+  id         String     @id @default(cuid())
   name       String
   meta       Boolean @default(false)
   endEdges   Edge[]  @relation("Edge_endIDToVertex")
