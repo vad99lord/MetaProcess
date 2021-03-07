@@ -103,48 +103,52 @@ export const edges = [
     },
     {
         name: "meta - 1",
+        inMeta : true,
         startVertex: {
             connect: {
-                id : "3"
+                id : "5"
             }
         },
         endVertex: {
             connect: {
-                id : "4"
+                id : "1"
             }
-        },
+        }
     },
     {
         name: "meta - 2",
+        inMeta : true,
         startVertex: {
             connect: {
-                id : "3"
+                id : "5"
             }
         },
         endVertex: {
             connect: {
-                id : "4"
+                id : "2"
             }
         },
     },
     {
         name: "meta - 3",
+        inMeta : true,
         startVertex: {
             connect: {
-                id : "3"
+                id : "5"
             }
         },
         endVertex: {
             connect: {
-                id : "4"
+                id : "3"
             }
         },
     },
     {
         name: "meta - 4",
+        inMeta : true,
         startVertex: {
             connect: {
-                id : "3"
+                id : "5"
             }
         },
         endVertex: {
