@@ -1,14 +1,14 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
+import {EdgeDefinition, ElementDefinition, NodeDefinition} from 'cytoscape';
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
     method : T,
     params : MethodArgumentTypes<typeof VertexApi_.prototype[T]>,
 };
 export type VertexApiReturn<T extends keyof VertexApi_> = Prisma.PromiseReturnType<typeof VertexApi_.prototype[T]>
-/*export interface UserApiReturn<T extends keyof User> extends RemoteApiReturn{
-    returns : Prisma.PromiseReturnType<typeof User.prototype[T]>
-}*/
+//export type VertexApiGenericReturn<T extends keyof VertexApi_> = ReturnType<typeof VertexApi_.prototype[T]>
+
 
 const prisma = new PrismaClient();
 
@@ -18,6 +18,51 @@ export class VertexApi_ {
         const users = await prisma.vertex.findMany();
         return users;
     }
+
+    public async getCytoVertices(params?: any){
+        const vertices = await prisma.vertex.findMany({
+
+            select : {
+                id : true,
+                name : true,
+                endEdges : {
+                    select : {
+                        startID : true,
+                    },
+                    where : {
+                        inMeta : true
+                    },
+                    take : 1,
+                }
+            }
+        })
+        let cytoVerts : ElementDefinition[] = [];
+        vertices.forEach((v) => 
+            cytoVerts.push({group : "nodes", data : {id : v.id, name: v.name, parent: v.endEdges[0]?.startID}})
+        )
+        return cytoVerts;
+    }
+
+    public async getCytoEdges(params?: any){
+        const edges = await prisma.edge.findMany({
+            select : {
+                id: true,
+                name: true,
+                startID: true,
+                endID: true,
+            },
+            where : {
+                inMeta : false,
+            }
+        })
+        let cytoEdges : ElementDefinition[] = [];
+        edges.forEach((e) => 
+            cytoEdges.push({group : "edges", data : {id : e.id, source: e.startID, target : e.endID, name: e.name}})
+        )
+        return cytoEdges;
+    }
+
+
 }
 
 

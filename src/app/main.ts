@@ -1,6 +1,12 @@
 import {app, BrowserWindow, ipcMain} from 'electron';
 import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
 import { QueryChannel } from '../ipc/QueryChannel';
+
+//auto reload view from source changes, dev only
+try {
+  require('electron-reloader')(module)
+} catch (_) {}
+
 class Main {
 
   constructor(ipcChannels: IpcChannelInterface[]){  

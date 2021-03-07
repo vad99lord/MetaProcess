@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <link href="style.css" rel="stylesheet" />
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="
     ">
@@ -15,8 +16,13 @@
         <button id="test" class="show-vertices">Show vertices</button>
     </section>
     <p id='test_text'></p>
+    <input type="button" id="add edge" value="add edge">
+    <input type="button" id="add vertex" value="add vertex">
+    <input type="button" id="add parent" value="add parent">
+    <div id="cy"></div>
 </body>
 <script>
     require('../../dist/src/app/renderer.js')
 </script>
+
 </html>
