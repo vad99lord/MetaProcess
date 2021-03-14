@@ -3,6 +3,7 @@ import {VertexApi,VertexApiReturn, VertexApi_} from "../ipc/VerticesApi";
 import { QueryChannel } from "../ipc/QueryChannel";
 import {ElementDefinition,NodeDefinition,EdgeDefinition} from 'cytoscape';
 import cytoscape = require('cytoscape');
+import { removeListener } from "process";
 const { ipcRenderer } = require('electron');
 
 const ipc = new IpcService(ipcRenderer);
@@ -85,15 +86,62 @@ const cy = cytoscape({
   }
 });
 
+
+function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
+  console.log(source.id());
+  console.log(target.id());
+  cy.add([
+      { group: 'edges', data: { id: source.id()+target.id(), source: source.id(), target: target.id()} }]);
+}
+
+//const nodesConst : cytoscape.NodeSingular[] = [];
+/*function test(){
+  let nodes : cytoscape.NodeSingular[] = []
+  let innerTest = function(evt : cytoscape.EventObject){
+    nodes.push(evt.target);
+    if (nodes.length == 2){
+      addEdge(nodes[0],nodes[nodes.length-1]);
+      nodes = []
+      cy.removeListener('select','node',innerTest);
+    }
+  }
+  return innerTest;
+}
+
 document.getElementById('add edge')!.addEventListener('click',() => {
-	let nodes = cy.nodes(":selected");
- 	if (nodes.size()==2){
+  let nodes : {nodes: cytoscape.NodeSingular[]} = {nodes : []}
+  cy.addListener('select','node', test());
+});*/
+
+
+function test(this : any, evt : cytoscape.EventObject){
+    this.nodes.push(evt.target);
+    if (this.nodes.length == 2){
+      addEdge(this.nodes[0],this.nodes[this.nodes.length-1]);
+      this.nodes = []
+      cy.removeListener('select','node',this.test);
+    }
+};
+
+document.getElementById('add edge')!.addEventListener('click',() => {
+  let nodes : {nodes: cytoscape.NodeSingular[]} = {nodes : []}
+  let t = test.bind(nodes);
+  cy.addListener('select','node', t);
+});
+
+  /*(evt) => {
+    test(evt,nodes).then((num) => {
+      if (num === 10)
+        cy.removeListener('select','node',test)
+    }*/
+	/*let nodes = cy.nodes(":selected").toArray();
+ 	if (nodes.length==2){
   	console.log(nodes[0].id());
     console.log(nodes[1].id());
   	cy.add([
   { group: 'edges', data: { id: nodes[0].id()+nodes[1].id(), source: nodes[0].id(), target: nodes[1].id()} }]);
-  };
-});
+  };*/
+//});
 
 function makeid(length: number) {
    var result           = '';
