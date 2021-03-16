@@ -3,10 +3,10 @@ import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
 import { QueryChannel } from '../ipc/QueryChannel';
 
 //auto reload view from source changes, dev only
-try {
+/*try {
   require('electron-reloader')(module)
 } catch (_) {}
-
+*/
 class Main {
 
   constructor(ipcChannels: IpcChannelInterface[]){  
@@ -35,8 +35,9 @@ class Main {
       width: 800,
       title: `Yet another Electron Application`,
       webPreferences: {
-        nodeIntegration: true // makes it possible to use `require` within our index.html
-      }
+        nodeIntegration: true, // makes it possible to use `require` within our index.html
+        enableRemoteModule : true, // remove remove after debugging!
+      },
     });
 
     this.mainWindow.webContents.openDevTools();

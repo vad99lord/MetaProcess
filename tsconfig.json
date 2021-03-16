@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
+    "inlineSourceMap": true,
+    "inlineSources" : true,
     "outDir": "dist",
     "strict": true,
     "lib": ["esnext","DOM"],

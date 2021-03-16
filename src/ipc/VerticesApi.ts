@@ -1,6 +1,8 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import {EdgeDefinition, ElementDefinition, NodeDefinition} from 'cytoscape';
+import { vertices } from '../../prisma/mocks';
+import * as _ from "lodash";
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
     method : T,
@@ -17,6 +19,35 @@ export class VertexApi_ {
     public async getVertices(params?: any) {
         const users = await prisma.vertex.findMany();
         return users;
+    }
+
+    public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean}){
+        const edge = await prisma.edge.create({
+            data : {
+                name : params.name,
+                startVertex : {
+                    connect : {
+                        id : params.startID
+                    }
+                },
+                endVertex : {
+                    connect : {
+                        id : params.endID
+                    }
+                },
+                inMeta : params.inMeta ?? false,
+            }
+        })
+        return edge;
+    }
+    public async createVertex(params : {name : string, meta? : boolean}){
+        const vertex = await prisma.vertex.create({
+            data : {
+                name : params.name,
+                meta : params.meta ?? false,
+            }
+        })
+        return vertex;
     }
 
     public async getCytoVertices(params?: any){
@@ -62,79 +93,113 @@ export class VertexApi_ {
         return cytoEdges;
     }
 
-
-}
-
-
-
-
-
-
-/*
-type OnlyClassMethods<T> = {
-    [K in keyof T]: [K] extends (...args: any[]) => any ? [K] : never
-}[keyof T]
-
-let sdf : keyof User = 'getUsers';
-const a : User = new User();
-User.prototype[sdf]("fds", 3);
-callMethod('foo') // error
-callMethod('member1')// error
-
-let dfsdf = User.prototype.getUserEmail.name;
-const testUserObj = {
-    static async getUserEmail(param: string) {
-        const users = await prisma.user.findMany({ select: { email: true } });
-        return users;
-    }
-}
-
-namespace custom {
-    export async function getUserEmail(param: string) {
-        const users = await prisma.user.findMany({ select: { email: true } });
-        return users;
-    }
-}
-
-type R = keyof typeof custom;
-
-type TestArguments = ArgumentTypes<typeof getUserEmail>
-
-type FunctionArgs<F extends (...args: any) => Promise<any>> =
-    {
-        f: Function,
-        args: ArgumentTypes<F>,
-        returns: Prisma.PromiseReturnType<F>
+    public async deleteVertex(params : {verticesID: string[]}){
+        //deleteMany doesn't work for vertex table
+        //deleting all edges firstly manually
+        await Promise.all(_.map(params.verticesID,async (vertexID) => {
+            await prisma.edge.deleteMany({
+                where : {
+                    OR: [
+                        {
+                            startID : vertexID,
+                        },
+                        {
+                            endID : vertexID,
+                        },
+                    ]
+                }
+            });
+        }));
+        const vertices = await prisma.vertex.deleteMany({
+            where : {
+                id : {
+                    in : params.verticesID
+                }
+            }
+        });
+        return vertices;
     }
 
-type UserApiKeys = keyof User;
-type UserApiFuncs = typeof User.prototype.getUserEmail | typeof User.prototype.getUserEmail;
-type api = { k: UserApiKeys, f: FunctionArgs<UserApiFuncs> }
+    public async deleteEdge(params : {edgesID: string[]}){
+        //deleteMany doesn't work for many to many cascade tables
+        /*const edges =  await Promise.all(_.map(params.edgesID,async (edgeID) => {
+            return prisma.edge.delete({
+                where : {
+                    id : edgeID
+                    }
+            });
+        }));
+        return edges;*/
+        const edges = await prisma.edge.deleteMany({
+                where : {
+                    id : { 
+                        in: params.edgesID
+                    }
+                }
+            });
+        return edges;
+    }
+
+    public async unionParent(params: {unionName: string, childrenID: string[] , unionParentID? : string}){
+        let metaV = await this.createVertex({name : params.unionName, meta : true});
+        metaV = await this.includeParent({parentID: metaV.id, childrenID: params.childrenID})
+        if (!_.isNil(params.unionParentID)){
+            await this.createEdge({
+                name: VertexApi_.createMetaEdgeName(metaV.id),
+                startID : params.unionParentID!,
+                endID : metaV.id,
+                inMeta : true,
+            })
+        }
+        return metaV;
+    }
+
+    private static createMetaEdgeName(cuid : string) : string{
+        return "meta" + _.truncate(cuid, {
+            "length" : 10,
+        })
+    }
+
+    public async includeParent(params: {parentID: string, childrenID: string[]}){
+        await prisma.edge.deleteMany({
+            where : {
+                endID : {
+                    in : params.childrenID,
+                },
+                inMeta : true,
+            }
+        });
+        const metaV = await prisma.vertex.update({
+            where : {
+                id : params.parentID,
+            },
+            data : {
+                meta : true,
+            }
+        })
+
+        let edges = await Promise.all(_.map(params.childrenID,async (childID) => {
+            let edgeName = VertexApi_.createMetaEdgeName(childID);
+            return await prisma.edge.create({
+                data : {
+                    name : edgeName,
+                    startVertex : {
+                        connect : {
+                            id : metaV.id
+                        }
+                    },
+                    endVertex : {
+                        connect : {
+                            id : childID
+                        }
+                    },
+                    inMeta : true
+                }
+            })
+        }));
+        return metaV;
+    }
 
 
-const userAPI : api = {
-    k : 'getUsers', f : {f : User.prototype.getUserEmail, args : ['sdf'], returns : [{email : 'email'}]}
 }
 
-let f = userAPI.f.returns;
-
-
-/*export type RemoteApi<F extends Function> = { [K: string]: FunctionArgs<F> }[];
-
-
-
-let u: User = new User();
-u['']
-for (let f in u) {
-    let g = u[f];
-}
-
-const UserAPI: RemoteApi = {
-    "test": { F: User.prototype.getUserEmail, args }
-}
-
-
-export type sdf = Keys<typeof UserApi>;
-
-type pick = { keys: Array<keyof typeof UserApi> }
-*/
