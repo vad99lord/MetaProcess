@@ -1,5 +1,7 @@
 import {app, BrowserWindow, ipcMain} from 'electron';
 import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
+import { AttributeChannel } from '../ipc/AttributesChannel';
+import { FileChannel } from '../ipc/FileChannel';
 import { QueryChannel } from '../ipc/QueryChannel';
 
 //auto reload view from source changes, dev only
@@ -51,4 +53,4 @@ class Main {
 }
 
 // Here we go!
-new Main([new QueryChannel()]);
+new Main([new QueryChannel(),new AttributeChannel(), new FileChannel()]);

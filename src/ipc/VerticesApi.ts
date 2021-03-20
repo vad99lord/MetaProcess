@@ -2,6 +2,7 @@ import { PrismaClient, Prisma } from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import {EdgeDefinition, ElementDefinition, NodeDefinition} from 'cytoscape';
 import { vertices } from '../../prisma/mocks';
+import {Element} from './FilesApi';
 import * as _ from "lodash";
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
@@ -19,6 +20,27 @@ export class VertexApi_ {
     public async getVertices(params?: any) {
         const users = await prisma.vertex.findMany();
         return users;
+    }
+
+    public async updateElementName(params: {element : Element, newName : string}) {
+        let ele = null;
+        const updateParams = {
+            data : {
+                name : params.newName
+            },
+            where : {
+                id : params.element.id
+            }
+        };
+        if (params.element.type === "Edge"){
+            ele = await prisma.edge.update(updateParams);
+        }
+        else {
+            if (params.element.type === "Vertex"){
+                ele = await prisma.vertex.update(updateParams);
+            } 
+        }
+        return ele;
     }
 
     public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean}){

@@ -1,8 +1,60 @@
 #cy {
-    height: 80%;
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: 300px;
+    height: 100%;
+    /* width: 500px; */
+    display: block;
     /*background: green;*/
   }
+
+body,h1 {
+  margin: 0;
+} 
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+thead {
+  font-weight: bold;
+}
+
+#docs-table table {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+
+ul {
+  list-style-type: none;
+  margin : 0;
+}
+.main {
+  background-color: crimson;
+  height: 100vh;
+}
+
+.header {
+  background-color: chocolate;
+  padding-bottom: 30px;
+}
+
+.column-left {
+  float: left;
+  width: 75%;
+  height: 100%;
+  background-color: bisque;
+}
+
+.column-right{
+  padding: 10px;
+  float: left;
+  box-sizing: border-box;
+  width: 25%;
+  background-color: cadetblue;
+}
+
+/* Clear floats after the columns */
+.row {
+  display: flex;
+  height: 100%;
+}

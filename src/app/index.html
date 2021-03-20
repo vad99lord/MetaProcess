@@ -7,24 +7,37 @@
     <meta http-equiv="Content-Security-Policy" content="
     ">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Prisma Sample App</title>
+    <!-- <script type="text/javascript" src="test.js" defer></script> -->
+    <title>MetaProcess</title>
 </head>
 
 <body>
-    <h1>Prisma Sample App</h1>
-    <section class="controls">
-        <button id="test" class="show-vertices">Show vertices</button>
-    </section>
-    <p id='test_text'></p>
-    <input type="button" id="add edge" value="add edge">
-    <input type="button" id="add vertex" value="add vertex">
-    <input type="button" id="union parent" value="union to parent">
-    <input type="button" id="include parent" value="include into parent">
-    <input type="button" id="delete edge" value="delete edge">
-    <input type="button" id="delete vertex" value="delete vertex">
-    <input type="button" id="remove parent" value="remove parent">
-    <input type="button" id="reload" value="reload">
-    <div id="cy"></div>
+    <div class="main">
+    <div class="header">
+        <h1>MetaProcess</h1>
+        <input type="button" id="add edge" value="add edge">
+        <input type="button" id="add vertex" value="add vertex">
+        <input type="button" id="union parent" value="union to parent">
+        <input type="button" id="include parent" value="include into parent">
+        <input type="button" id="delete edge" value="delete edge">
+        <input type="button" id="delete vertex" value="delete vertex">
+        <input type="button" id="remove parent" value="remove parent">
+        <input type="button" id="reload" value="reload">    
+    </div>
+    <div class="row">
+        <div class="column-left">
+            <div id="cy"></div>
+        </div>
+        <div class=column-right>
+            <input type="text" id="elem-name">
+            <input type="button" id="update-elem-name" value="update name"> 
+            <!-- <h3 id=elem-name>sdfsdfsdfsdfsdfsdfsdfsdf</h3> -->
+            <div id="docs-table"></div>
+            <input type="button" id="open-file-dialog" value="add file"> 
+            <input type="button" id="open-dir-dialog" value="add directory"> 
+        </div>
+    </div>
+</div>
 </body>
 <script>
     require('../../dist/src/app/renderer.js')
