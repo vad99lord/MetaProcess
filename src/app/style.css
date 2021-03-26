@@ -21,6 +21,15 @@ thead {
   width: 100%;
   margin-top: 10px;
   margin-bottom: 10px;
+  table-layout: fixed;
+}
+#docs-table td {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#docs-table td:nth-child(2) {
+  width: 40%;
 }
 
 
@@ -29,20 +38,21 @@ ul {
   margin : 0;
 }
 .main {
-  background-color: crimson;
+  /* background-color: crimson; */
   height: 100vh;
 }
 
 .header {
-  background-color: chocolate;
+  /* background-color: chocolate; */
   padding-bottom: 30px;
+  border-bottom: 2px solid black;
 }
 
 .column-left {
   float: left;
   width: 75%;
   height: 100%;
-  background-color: bisque;
+  /* background-color: bisque; */
 }
 
 .column-right{
@@ -50,7 +60,8 @@ ul {
   float: left;
   box-sizing: border-box;
   width: 25%;
-  background-color: cadetblue;
+  border-left: 2px solid black;
+  /* background-color: cadetblue; */
 }
 
 /* Clear floats after the columns */
