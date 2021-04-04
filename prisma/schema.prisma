@@ -14,6 +14,7 @@ model Directory {
   files     File[]
   edges    Edge[]
   vertices Vertex[]
+  valid    Boolean @default(true)
 
   @@unique([name, fullPath], name: "autoindex_Directory_1")
   @@index([name], name: "dir_name")
@@ -39,6 +40,7 @@ model File {
   directory Directory? @relation(fields: [dirId], references: [id])
   edges    Edge[]
   vertices Vertex[]
+  valid     Boolean @default(true)
 
   @@unique([name, dirId], name: "autoindex_File_2")
   @@unique([name, fullPath], name: "autoindex_File_1")

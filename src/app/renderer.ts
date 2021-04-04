@@ -5,9 +5,9 @@ import {ElementDefinition,NodeDefinition,EdgeDefinition} from 'cytoscape';
 import * as _ from "lodash";
 import cytoscape = require('cytoscape');
 import { removeListener } from "process";
-import { AttributeApi, AttributeApiReturn,DocumentType,Document } from "../ipc/AttributesApi";
+import { AttributeApi, AttributeApiReturn,DocumentType,Document, ElementDocuments } from "../ipc/AttributesApi";
 import { AttributeChannel } from "../ipc/AttributesChannel";
-import { Element, FileApi, FileApiReturn } from "../ipc/FilesApi";
+import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
 const { ipcRenderer} = require('electron');
 
@@ -16,25 +16,13 @@ const {getCurrentWindow} = require('electron').remote;
 function reloadWindow(){
   getCurrentWindow().reload();
 }
+
+
 const ipc = new IpcService(ipcRenderer);
 
 document.getElementById('reload')!.addEventListener('click', () => {
   reloadWindow();
 });
-
-/*document.getElementById('test')!.addEventListener('click', () => {
-  let users : VertexApi<"getVertices"> = {method : "getVertices", params : []};
-
-  ipc.send<VertexApiReturn<"getVertices">>(QueryChannel.QEURY_CHANNEL, users).then((vertices) => {
-    let verticesStr = "";
-    vertices.forEach(v => {
-      verticesStr += v.id + " "+ v.name + "<br>";
-    });
-    document.getElementById('test_text')!.innerHTML = verticesStr;
-  }
-  );
-
-});*/
 
 
 //get edges and vertices in cytoscape format
@@ -43,6 +31,7 @@ let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">
 //merge nodes and vertices in one promise
 let cve = Promise.all([ce,cv]).then(([ce,cv]) => {return [...ce, ...cv]});
 
+ipc.send<FileApiReturn<"checkDocsExist">>(FileChannel.FILE_CHANNEL, {method : "checkDocsExist", params : []});
 
 const cy = cytoscape({
   container: document.getElementById('cy'),
@@ -334,6 +323,9 @@ document.getElementById('update-elem-name')!.addEventListener('click',() => {
 
 function createRow(tableBody: HTMLTableSectionElement, doc : Document){
   let row = document.createElement('tr');
+  if (!doc.valid){
+    row.classList.add('invalid');
+  }
     row.id = "docs-table_"+doc.id;
     for (let docProp of _.values(_.pick(doc,"name","fullPath","type"))){
       let cell = document.createElement('td');
@@ -341,20 +333,80 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
       row.appendChild(cell);
     } 
     row.addEventListener('click',(e)=>{
-        let name = row.firstChild!.textContent;
+        /*let name = row.firstChild!.textContent;
         let path = row.firstChild!.nextSibling!.textContent;
         let fullPath = path!+"/"+name!;
         //console.log(fullPath);
+        */
+        if (!doc.valid){
+            let dialogParams : FileApi<"openFileDialog"> = {
+              method : "openFileDialog", 
+              params : [{type : doc.type==="Directory" ? "openDirectory": "openFile"}]
+            };
+            ipc.send<FileApiReturn<"openFileDialog">>(FileChannel.FILE_CHANNEL, dialogParams).then((dialogReturn) => {
+              if (dialogReturn.canceled){
+                console.log("dialog cancelled");
+                return;
+              }
+              const fullPath = dialogReturn.filePaths[0];
+              let updateParams : FileApi<"updateDoc"> = {
+                method : "updateDoc", 
+                params : [{doc : doc, newPath : fullPath, valid : true}]
+              };
+              ipc.send<FileApiReturn<"updateDoc">>(FileChannel.FILE_CHANNEL, updateParams).then((updDoc) =>{
+                  if (!_.isNil(updDoc)){
+                    row.classList.remove('invalid');
+                  }
+                  else {
+                      let eles = cy.elements(":selected");
+                      if (eles.empty() || eles.size() > 1){
+                          alert("select one element to update document!");
+                          return;
+                      }
+                      const elem : Element = {
+                        id: eles.first().id(),
+                        type: eles.first().isNode() ? "Vertex" : "Edge"
+                      }
+                      let disconParams : FileApi<"disconnectDocument"> = {
+                        method : "disconnectDocument", 
+                        params : [{ele : elem, docType : doc.type, docID : doc.id}]
+                      };
+                      ipc.send<FileApiReturn<"disconnectDocument">>(FileChannel.FILE_CHANNEL, disconParams).then((delDoc) =>{
+                          if (_.isNil(delDoc)){
+                            return;
+                          }
+                          tableBody.removeChild(row);
+                          let conParams : FileApi<"connectDocument"> = {
+                            method : "connectDocument", 
+                            params : [{type : doc.type, fullPath : fullPath, 
+                              vertexID : elem.type==="Vertex" ? [elem.id] : undefined, 
+                              edgeID : elem.type==="Edge" ? [elem.id] : undefined,}]
+                          };
+                          ipc.send<FileApiReturn<"connectDocument">>(FileChannel.FILE_CHANNEL, conParams).then((conDoc) =>{
+                              if (_.isNil(conDoc)){
+                                return;
+                              }
+                              createRow(tableBody,conDoc);
+                          });
+                      });
+                  }
+              });
+            });
+        }
+        else {
         let dialogParams : FileApi<"openFile"> = {
           method : "openFile", 
-          params : [{fullPath : fullPath}]
+          params : [{doc : doc}]
         };
         ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
-           if (err !== ""){
-             console.log("error opening file: "+err);
-             return;
+           if (!_.isEmpty(err)){
+              row.classList.add('invalid');
+           }
+           else {
+              row.classList.remove('invalid');
            }
         });
+      }
     });
     row.addEventListener('contextmenu',(e)=>{
       let eles = cy.elements(":selected");
@@ -442,7 +494,7 @@ function tagDocument(itemType : "File"|"Directory",fullPath : string){
         vertexID : nodes.nonempty() ? nodesID: undefined}]
     };
     ipc.send<FileApiReturn<"connectDocument">>(FileChannel.FILE_CHANNEL, docParams).then((doc) => {
-        const tableBody = <HTMLTableSectionElement>document.getElementsByTagName('tbody')[0];
+        const tableBody = <HTMLTableSectionElement>document.getElementById('docs-table')!.getElementsByTagName('tbody')[0];
         createRow(tableBody,doc!);
     });
 
@@ -453,4 +505,223 @@ document.getElementById('open-file-dialog')!.addEventListener('click',() => {
 });
 document.getElementById('open-dir-dialog')!.addEventListener('click',() => {
   openDialog("openDirectory");
+});
+
+
+
+function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocuments">){
+  const table = document.createElement('table');
+  const tableHead = document.createElement('thead');
+  let row = document.createElement('tr');
+
+  let omitData = _.map(data,(eleDocs)=>{
+    return {name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.pick(doc,["name","fullPath","type"]))}
+  });
+  
+  for (let docProp in _.first(_.first(omitData)!.documents)!){
+    let cell = document.createElement('td');
+    cell.appendChild(document.createTextNode(docProp));
+    row.appendChild(cell);
+  } 
+  tableHead.appendChild(row);
+  table.appendChild(tableHead);
+  
+  const tableBody = document.createElement('tbody');
+  const colCount = _.size(_.first(_.first(data)!.documents)!);
+  _.forEach(omitData,(eleDocs)=>{
+    let row = document.createElement('tr');
+
+    let cell = document.createElement('td');
+    cell.appendChild(document.createTextNode(eleDocs.name));
+    cell.colSpan = colCount;
+    row.appendChild(cell);
+    tableBody.appendChild(row);
+
+    _.forEach(eleDocs.documents,(doc)=>{
+      let row = document.createElement('tr');
+      _.forOwn(doc,(docVal)=>{
+        let cell = document.createElement('td');
+        cell.appendChild(document.createTextNode(docVal));
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
+
+  });
+  table.appendChild(tableBody);
+
+  return table;
+}
+
+
+
+function findElementsWithDocs(searchValue : string) {
+  let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue }] };
+  ipc.send<VertexApiReturn<"findElements">>(QueryChannel.QEURY_CHANNEL, searchParams).then((eles) => {
+    let vIDs: { name: string, ids: string[] }[] = [];
+    if (!_.isEmpty(eles.vertices)) {
+      let nodes = cy.nodes();
+      vIDs = _.map(eles.vertices, (v) => {
+        const node = nodes.getElementById(v.id);
+        const nChilds = node.union(node.descendants());
+        const ids = nChilds.map(function (ele) {
+          return ele.id();
+        });
+        return { name: v.name, ids: ids };
+      })
+    }
+    let eIDs = !_.isEmpty(eles.edges) ? _.map(eles.edges, "id") : [];
+    let searchParams: AttributeApi<"findElementsDocuments"> = { method: "findElementsDocuments", params: [{ searchV: vIDs, searchE: eIDs }] };
+    ipc.send<AttributeApiReturn<"findElementsDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((eleDocs) => {
+      // _.forEach(eleDocs, (eleDoc) => {
+      //   console.log(eleDoc.name);
+      //   console.log(eleDoc.documents);
+      // })
+      if (_.isEmpty(eleDocs)) {
+        return;
+      }
+      const tableDiv = document.getElementById('search-table')!;
+      tableDiv.innerHTML = "";
+      tableDiv.appendChild(createElementsDocsTable(eleDocs));
+    });
+  });
+}
+
+
+function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElements">){
+  let docsEles = _.map(data,(docEles)=>{
+    const edgesName : ElementName[] = _.map(docEles.edges, (e)=>{return {name : e.name,type : "Edge"}});
+    let nodes = cy.nodes();
+    let descNodes = cy.collection();
+    _.forEach(docEles.vertices, (v) => {
+          let n = nodes.getElementById(v.id);
+          descNodes = descNodes.add(n);
+    });
+    descNodes = descNodes.union(descNodes.ancestors());
+    const nodesName : ElementName[] = descNodes.map((ele) => { return {name : ele.data('name'),type : "Vertex"}});
+    const elesName = _.concat(edgesName,nodesName);
+    return {doc : _.pick(docEles.doc,["name","fullPath","type"]), names : elesName};
+  });
+  
+  const table = document.createElement('table');
+  const tableHead = document.createElement('thead');
+  let row = document.createElement('tr');
+  for (let docProp in _.first(docsEles)!.doc){
+    let cell = document.createElement('td');
+    cell.appendChild(document.createTextNode(docProp));
+    row.appendChild(cell);
+  } 
+  tableHead.appendChild(row);
+  table.appendChild(tableHead);
+  
+  const tableBody = document.createElement('tbody');
+  const colCount = _.size(_.first(docsEles)!.doc);
+  _.forEach(docsEles,(docEles)=>{
+
+    let row = document.createElement('tr');
+    _.forOwn(docEles.doc,(docVal)=>{
+      let cell = document.createElement('td');
+      cell.appendChild(document.createTextNode(docVal));
+      row.appendChild(cell);
+    });
+    tableBody.appendChild(row);
+
+    _.forEach(docEles.names,(eleName)=>{
+      let row = document.createElement('tr');
+
+      let cell = document.createElement('td');
+      cell.appendChild(document.createTextNode(eleName.name));
+      cell.colSpan = colCount-1;
+      row.appendChild(cell);
+
+      cell = document.createElement('td');
+      cell.appendChild(document.createTextNode(eleName.type));
+      row.appendChild(cell);
+
+      tableBody.appendChild(row);
+    });
+  });
+  table.appendChild(tableBody);
+
+  return table;
+}
+
+
+function findDocumentsWithElements(searchValue : string) {
+  let searchParams: AttributeApi<"findDocumentsElements"> = { method: "findDocumentsElements", params: [{ searchName: searchValue }] };
+  ipc.send<AttributeApiReturn<"findDocumentsElements">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((docEles) => {
+    if (_.isEmpty(docEles)) {
+      return;
+    }
+    // for (let docEle of docEles) {
+    //   console.log(docEle.doc.name);
+    //   if (!_.isEmpty(docEle.edges)) {
+    //     console.log(_.map(docEle.edges, "name"));
+    //   }
+    //   if (!_.isEmpty(docEle.vertices)) {
+    //     let nodes = cy.nodes();
+    //     let descNodes = cy.collection();
+    //     _.forEach(docEle.vertices, (v) => {
+    //       let n = nodes.getElementById(v.id);
+    //       descNodes = descNodes.add(n);
+    //     });
+    //     descNodes = descNodes.union(descNodes.ancestors());
+    //     console.log(descNodes.map((ele) => { return ele.data('name'); }));
+    //   }
+    // }
+    const tableDiv = document.getElementById('search-table')!;
+    tableDiv.innerHTML = "";
+    tableDiv.appendChild(createDocsElementsTable(docEles));
+  });
+}
+
+
+document.getElementById('search')!.addEventListener('click',() => {
+        let searchValue = (<HTMLInputElement>document.getElementById('search-text'))!.value;
+        if (searchValue === "") {
+          alert("empty query!");
+          return;
+        }
+        //TODO case-insentive search for ciryllic!!!
+        //searchValue = _.toLower(searchValue);  
+
+        const searchDocs = (<HTMLInputElement>document.getElementById("search-type"))!;
+        if (!searchDocs.checked) {
+          findElementsWithDocs(searchValue)
+        }
+        else {
+          findDocumentsWithElements(searchValue);
+        };
+})
+
+function cloneElements(){
+  const nodes = cy.nodes(":selected");
+  if (nodes.empty())
+    return;
+  const childs = nodes.descendants();
+  const nChilds = nodes.union(childs);
+  const ncEdges = nChilds.edgesWith(nChilds);
+  const nodesID = nChilds.map(function( ele ){
+    return ele.id();
+  });
+  const edgesID = ncEdges.map(function( ele ){
+    return ele.id();
+  });
+
+  let cloneParams : AttributeApi<"cloneElementsDocuments"> = {
+    method : "cloneElementsDocuments", 
+    params : [{VIDs: nodesID, EIDs: edgesID}]};
+  ipc.send<AttributeApiReturn<"cloneElementsDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, cloneParams).then((eleIDs) => {
+    let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{vertexID : eleIDs.VIDs}]};
+    let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{ edgeID: eleIDs.EIDs }] };
+      let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, vParams);
+      let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, eParams);
+      Promise.all([ce,cv]).then(([ce,cv]) => {
+        const cloneEles = [...ce, ...cv];
+        cy.add(cloneEles);
+      });
+  });
+}
+document.getElementById('clone elements')!.addEventListener('click',() => {
+  cloneElements();
 });

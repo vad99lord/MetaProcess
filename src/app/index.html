@@ -22,6 +22,7 @@
         <input type="button" id="delete edge" value="delete edge">
         <input type="button" id="delete vertex" value="delete vertex">
         <input type="button" id="remove parent" value="remove parent">
+        <input type="button" id="clone elements" value="clone elements">
         <input type="button" id="reload" value="reload">    
     </div>
     <div class="row">
@@ -29,9 +30,16 @@
             <div id="cy"></div>
         </div>
         <div class=column-right>
+            <div class="search-group">
+            <input type="text" id="search-text" placeholder="Search">
+                <input type="checkbox" id="search-type" name="documents"
+                       checked>
+                <label for="documents">Docs</label>
+            <input type="button" id="search" value="Search"> 
+            <div id="search-table"></div>
+            </div>
             <input type="text" id="elem-name">
             <input type="button" id="update-elem-name" value="update name"> 
-            <!-- <h3 id=elem-name>sdfsdfsdfsdfsdfsdfsdfsdf</h3> -->
             <div id="docs-table"></div>
             <input type="button" id="open-file-dialog" value="add file"> 
             <input type="button" id="open-dir-dialog" value="add directory"> 

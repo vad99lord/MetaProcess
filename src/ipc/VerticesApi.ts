@@ -1,8 +1,8 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import {EdgeDefinition, ElementDefinition, NodeDefinition} from 'cytoscape';
-import { vertices } from '../../prisma/mocks';
-import {Element} from './FilesApi';
+import { edges, vertices } from '../../prisma/mocks';
+import {Element, ElementType} from './FilesApi';
 import * as _ from "lodash";
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
@@ -20,6 +20,26 @@ export class VertexApi_ {
     public async getVertices(params?: any) {
         const users = await prisma.vertex.findMany();
         return users;
+    }
+
+    public async findElements(params: {searchName: string}){
+        let findVArgs = {
+            where : {
+                name : {
+                    contains : params.searchName,
+                }
+            }
+        };
+        const verts = await prisma.vertex.findMany(findVArgs);
+        let findEArgs = _.merge(findVArgs,{where : {inMeta : false}});
+        const edges = await prisma.edge.findMany(findEArgs);
+        /*let eles : Element[] = _.map(verts,(v)=> {
+                return _.assign(v,{type : "Vertex"} as ElementType);
+        });
+        eles = _.concat(eles,_.map(edges,(e)=> {
+            return _.assign(e,{type : "Edge"} as ElementType);
+        }));*/
+        return {vertices : verts, edges : edges};
     }
 
     public async updateElementName(params: {element : Element, newName : string}) {
@@ -72,9 +92,8 @@ export class VertexApi_ {
         return vertex;
     }
 
-    public async getCytoVertices(params?: any){
-        const vertices = await prisma.vertex.findMany({
-
+    public async getCytoVertices(params: {vertexID ?: string[]}){
+        let vertexParams = {
             select : {
                 id : true,
                 name : true,
@@ -87,8 +106,15 @@ export class VertexApi_ {
                     },
                     take : 1,
                 }
+            },
+            where : {
+                id : {}
             }
-        })
+        }
+        if (!_.isNil(params?.vertexID)){
+            vertexParams.where.id = {in : params.vertexID};
+        }
+        const vertices = await prisma.vertex.findMany(vertexParams)
         let cytoVerts : ElementDefinition[] = [];
         vertices.forEach((v) => 
             cytoVerts.push({group : "nodes", data : {id : v.id, name: v.name, parent: v.endEdges[0]?.startID}})
@@ -96,8 +122,8 @@ export class VertexApi_ {
         return cytoVerts;
     }
 
-    public async getCytoEdges(params?: any){
-        const edges = await prisma.edge.findMany({
+    public async getCytoEdges(params: {edgeID ?: string[]}){
+        const edgesParams = {
             select : {
                 id: true,
                 name: true,
@@ -106,8 +132,13 @@ export class VertexApi_ {
             },
             where : {
                 inMeta : false,
+                id : {}
             }
-        })
+        }
+        if (!_.isNil(params?.edgeID)){
+            edgesParams.where.id = {in : params.edgeID};
+        }
+        const edges = await prisma.edge.findMany(edgesParams);
         let cytoEdges : ElementDefinition[] = [];
         edges.forEach((e) => 
             cytoEdges.push({group : "edges", data : {id : e.id, source: e.startID, target : e.endID, name: e.name}})
@@ -116,30 +147,60 @@ export class VertexApi_ {
     }
 
     public async deleteVertex(params : {verticesID: string[]}){
+        const docDelete = {
+            where : {
+                vertices : {
+                    every : {
+                        id : {
+                            in : params.verticesID
+                        }
+                    }
+                },
+                edges : {
+                    every : {
+                        OR: [{
+                            startID : {
+                            in : params.verticesID
+                        }
+                    },
+                    {
+                        endID : {
+                            in : params.verticesID
+                        }
+                    }]
+                }
+            }
+        }
+    }
+        const files = prisma.file.deleteMany(docDelete);
+        const dirs = prisma.directory.deleteMany(docDelete);
         //deleteMany doesn't work for vertex table
         //deleting all edges firstly manually
-        await Promise.all(_.map(params.verticesID,async (vertexID) => {
-            await prisma.edge.deleteMany({
+        const edges = prisma.edge.deleteMany({
                 where : {
                     OR: [
                         {
-                            startID : vertexID,
+                            startID : {
+                                in : params.verticesID
+                            }
                         },
                         {
-                            endID : vertexID,
+                            endID : {
+                                in : params.verticesID
+                            }
                         },
                     ]
                 }
             });
-        }));
-        const vertices = await prisma.vertex.deleteMany({
+        const vertices = prisma.vertex.deleteMany({
             where : {
                 id : {
                     in : params.verticesID
                 }
             }
         });
-        return vertices;
+        const delEles = await prisma.$transaction([dirs,files,edges,vertices]);
+        return delEles;
     }
 
     public async deleteEdge(params : {edgesID: string[]}){
@@ -152,14 +213,35 @@ export class VertexApi_ {
             });
         }));
         return edges;*/
-        const edges = await prisma.edge.deleteMany({
+        const docsDelete = {
+            where : {
+                edges : {
+                    every : {
+                        id : {
+                            in: params.edgesID
+                        }
+                    }
+                },
+                vertices : {
+                    every : {
+                        id : {
+                            in: []
+                        }
+                    }
+                }
+            }
+        }
+        const files = prisma.file.deleteMany(docsDelete);
+        const dirs = prisma.directory.deleteMany(docsDelete);
+        const edges = prisma.edge.deleteMany({
                 where : {
                     id : { 
                         in: params.edgesID
                     }
                 }
             });
-        return edges;
+        const delEles = await prisma.$transaction([dirs,files,edges]);
+        return delEles;
     }
 
     public async unionParent(params: {unionName: string, childrenID: string[] , unionParentID? : string}){

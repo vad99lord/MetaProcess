@@ -17,6 +17,7 @@
     "@prisma/client": "2.17.0",
     "@types/cytoscape": "^3.14.12",
     "@types/node": "13.13.45",
+    "cuid": "^2.1.8",
     "cytoscape": "^3.18.1",
     "electron": "^11.3.0",
     "lodash": "^4.17.21"
