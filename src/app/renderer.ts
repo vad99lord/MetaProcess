@@ -24,7 +24,7 @@ const ipc = new IpcService(ipcRenderer);
 
 const handler = new IpcHandler(ipcRenderer);
 
-handler.handle(CloseChannel.CLOSE_CHANNEL,(ev,req)=>{
+handler.handleOnce(CloseChannel.CLOSE_CHANNEL,(ev,req)=>{
   const vPos : VertexPos[] = cy.nodes().map((n)=>{
     return {id : n.id(), pos : n.position()}
   })
