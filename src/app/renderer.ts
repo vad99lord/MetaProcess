@@ -11,6 +11,7 @@ import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
 import { IpcHandler } from "../ipc/IpcHandler";
 import { CloseChannel } from "../ipc/CloseChannel";
+import { clone } from "lodash";
 const { ipcRenderer} = require('electron');
 
 //TODO: REMOVE! DEBUG for reload after actions
@@ -70,6 +71,17 @@ const cy = cytoscape({
         'label': 'data(name)',
         'text-margin-y' : -10,
         'curve-style': 'bezier',
+      }
+    },
+    {
+      selector: '.tree-edges',
+      css: {
+        'target-arrow-shape': 'none'
+      }
+    },
+    {
+      selector: '.process-edges',
+      css: {
         'target-arrow-shape': 'triangle'
       }
     },
@@ -88,6 +100,8 @@ const cy = cytoscape({
 });
 //center graph in window
 cy.center();
+
+setTreeMode();
 
 function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
   // console.log(source.id());
@@ -138,8 +152,11 @@ function makeid(length: number) {
 function addVertex(){
   let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "testVertex"}]};
   ipc.send<VertexApiReturn<"createVertex">>(QueryChannel.QEURY_CHANNEL, vetrexParams).then((vertex) => {
+    //make sure added vertex is centered in visible model part
+    const ex = cy.extent()
+    const modelCenter = {x : ex.x1+ex.w/2,y : ex.y1+ex.h/2}
     cy.add([
-      { group: 'nodes', data: { id: vertex.id, name : vertex.name}}
+      { group: 'nodes', data: { id: vertex.id, name : vertex.name}, position : modelCenter}
     ]);
   });
 }
@@ -737,4 +754,32 @@ function cloneElements(){
 }
 document.getElementById('clone elements')!.addEventListener('click',() => {
   cloneElements();
+});
+
+
+function setTreeMode(){
+  const cloneBtn = document.getElementById('clone elements')!;
+  cloneBtn.style.visibility = 'hidden';
+  cloneBtn.style.display = 'none';
+  cy.edges().removeClass("process-edges");
+  cy.edges().addClass("tree-edges");
+}
+
+function setProcessMode(){
+  const cloneBtn = document.getElementById('clone elements')!;
+  cloneBtn.style.visibility = 'visible';
+  cloneBtn.style.display = 'inline-block';
+  cy.edges().removeClass("tree-edges");
+  cy.edges().addClass("process-edges");
+}
+
+document.getElementById('graph-mode')!.addEventListener('click',(e) => {
+  const cb = <HTMLInputElement> e.target
+  if (cb.checked){
+    setTreeMode();
+  }
+  else{
+    setProcessMode();
+  }
+  console.log("Clicked, new value = " + cb.checked);
 });

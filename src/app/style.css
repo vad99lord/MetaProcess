@@ -50,16 +50,30 @@ ul {
   /* background-color: chocolate; */
   padding-bottom: 30px;
   border-bottom: 2px solid black;
+  /* clear floats */
+  display: flex;
+  /* height: 100%; */
 }
 
-.column-left {
+.header .column-left {
+  float: left;
+  width: 90%;
+}
+
+.header .column-right{
+  float: left;
+  box-sizing: border-box;
+  width: 10%;
+}
+
+.row .column-left {
   float: left;
   width: 75%;
   height: 100%;
   /* background-color: bisque; */
 }
 
-.column-right{
+.row .column-right{
   padding: 10px;
   float: left;
   box-sizing: border-box;
