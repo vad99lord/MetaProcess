@@ -9,7 +9,7 @@ import { AttributeApi, AttributeApiReturn,DocumentType,Document, ElementDocument
 import { AttributeChannel } from "../ipc/AttributesChannel";
 import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
-import { IpcHandler } from "../ipc/IpcSender";
+import { IpcHandler } from "../ipc/IpcHandler";
 import { CloseChannel } from "../ipc/CloseChannel";
 const { ipcRenderer} = require('electron');
 
