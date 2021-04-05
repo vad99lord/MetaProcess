@@ -1,7 +1,10 @@
 import {app, BrowserWindow, ipcMain} from 'electron';
+import * as _ from "lodash";
 import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
 import { AttributeChannel } from '../ipc/AttributesChannel';
+import { CloseChannel } from '../ipc/CloseChannel';
 import { FileChannel } from '../ipc/FileChannel';
+import { IpcMainChannel } from '../ipc/IpcMainChannel';
 import { QueryChannel } from '../ipc/QueryChannel';
 
 //auto reload view from source changes, dev only
@@ -17,6 +20,7 @@ class Main {
     app.on('activate', this.onActivate);
     this.registerIpcChannels(ipcChannels);
   }
+
   private mainWindow?: BrowserWindow;
 
   private onWindowAllClosed() {
@@ -41,13 +45,24 @@ class Main {
         enableRemoteModule : true, // remove remove after debugging!
       },
     });
-
+    Main.registerIpcMainChannels([new CloseChannel(this.mainWindow, app)]);
     this.mainWindow.webContents.openDevTools();
     this.mainWindow.loadFile('./src/app/index.html');
   }
 
   private registerIpcChannels(ipcChannels: IpcChannelInterface[]) {
     ipcChannels.forEach(channel => ipcMain.handle(channel.getName(), (event, request) => channel.handle(event, request)));
+  }
+  
+  private static registerIpcMainChannels(ipcMainChannels: IpcMainChannel[]) {
+    _.forEach(ipcMainChannels, (mainChannel) => {
+      if (!_.isNil(mainChannel.on)){
+        ipcMain.on(mainChannel.getName(),(e, res) => mainChannel.on!(e, res));
+      }
+      if (!_.isNil(mainChannel.once)){
+        ipcMain.once(mainChannel.getName(),(e, res) => mainChannel.once!(e, res));
+      }
+    });
   }
 
 }

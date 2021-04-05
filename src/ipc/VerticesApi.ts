@@ -1,6 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
-import {EdgeDefinition, ElementDefinition, NodeDefinition} from 'cytoscape';
+import {EdgeDefinition, ElementDefinition, NodeDefinition,Position} from 'cytoscape';
 import { edges, vertices } from '../../prisma/mocks';
 import {Element, ElementType} from './FilesApi';
 import * as _ from "lodash";
@@ -11,6 +11,10 @@ export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi
 };
 export type VertexApiReturn<T extends keyof VertexApi_> = Prisma.PromiseReturnType<typeof VertexApi_.prototype[T]>
 //export type VertexApiGenericReturn<T extends keyof VertexApi_> = ReturnType<typeof VertexApi_.prototype[T]>
+
+export type VertexPos = Prisma.VertexGetPayload<{
+    select: { id: true}
+  }> & {pos : Position}
 
 
 const prisma = new PrismaClient();
@@ -105,7 +109,9 @@ export class VertexApi_ {
                         inMeta : true
                     },
                     take : 1,
-                }
+                },
+                x : true,
+                y : true
             },
             where : {
                 id : {}
@@ -117,7 +123,10 @@ export class VertexApi_ {
         const vertices = await prisma.vertex.findMany(vertexParams)
         let cytoVerts : ElementDefinition[] = [];
         vertices.forEach((v) => 
-            cytoVerts.push({group : "nodes", data : {id : v.id, name: v.name, parent: v.endEdges[0]?.startID}})
+            cytoVerts.push({group : "nodes", 
+            data : {id : v.id, name: v.name, parent: v.endEdges[0]?.startID},
+            position : {x : v.x, y : v.y}
+        })
         )
         return cytoVerts;
     }
@@ -304,6 +313,19 @@ export class VertexApi_ {
         return metaV;
     }
 
-
+    public async updatePositions(params: {vPos : VertexPos[]}) {
+        const vertPromise = _.map(params.vPos,(vP) => {
+            const v = prisma.vertex.update({
+                where : {id : vP.id},
+                data : {x: vP.pos.x, y: vP.pos.y} 
+            })
+            return v;
+        });
+        await prisma.$transaction([...vertPromise]);
+        const vertices = prisma.vertex.findMany({
+            where : {id : {in : _.map(params.vPos,"id")}},
+        })
+        return vertices;
+    }
 }
 

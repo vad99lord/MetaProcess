@@ -55,4 +55,6 @@ model Vertex {
   startEdges Edge[]  @relation("Edge_startIDToVertex")
   files    File[]
   directories Directory[]
+  x          Float     @default(0)
+  y          Float     @default(0)
 }

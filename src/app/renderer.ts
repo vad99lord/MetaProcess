@@ -1,5 +1,5 @@
 import { IpcService } from "../ipc/IpcService";
-import {VertexApi,VertexApiReturn, VertexApi_} from "../ipc/VerticesApi";
+import {VertexApi,VertexApiReturn, VertexApi_, VertexPos} from "../ipc/VerticesApi";
 import { QueryChannel } from "../ipc/QueryChannel";
 import {ElementDefinition,NodeDefinition,EdgeDefinition} from 'cytoscape';
 import * as _ from "lodash";
@@ -9,6 +9,8 @@ import { AttributeApi, AttributeApiReturn,DocumentType,Document, ElementDocument
 import { AttributeChannel } from "../ipc/AttributesChannel";
 import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
+import { IpcHandler } from "../ipc/IpcSender";
+import { CloseChannel } from "../ipc/CloseChannel";
 const { ipcRenderer} = require('electron');
 
 //TODO: REMOVE! DEBUG for reload after actions
@@ -19,6 +21,16 @@ function reloadWindow(){
 
 
 const ipc = new IpcService(ipcRenderer);
+
+const handler = new IpcHandler(ipcRenderer);
+
+handler.handle(CloseChannel.CLOSE_CHANNEL,(ev,req)=>{
+  const vPos : VertexPos[] = cy.nodes().map((n)=>{
+    return {id : n.id(), pos : n.position()}
+  })
+  let posParams : VertexApi<"updatePositions"> = {method : "updatePositions", params : [{vPos : vPos}]}
+  return ipc.send<VertexApiReturn<"updatePositions">>(QueryChannel.QEURY_CHANNEL, posParams);
+});
 
 document.getElementById('reload')!.addEventListener('click', () => {
   reloadWindow();
@@ -74,7 +86,8 @@ const cy = cytoscape({
     padding: 5
   }
 });
-
+//center graph in window
+cy.center();
 
 function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
   // console.log(source.id());
