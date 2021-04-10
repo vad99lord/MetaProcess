@@ -1,34 +1,36 @@
 import {IpcChannelInterface} from "./IpcChannelInterface";
-import {App, BrowserWindow, IpcMainEvent, IpcMainInvokeEvent} from 'electron';
+import {App, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent} from 'electron';
 import { IpcMainChannel } from "./IpcMainChannel";
 import { send } from "process";
 
 export class CloseChannel implements IpcMainChannel{
   public static readonly CLOSE_CHANNEL = 'CLOSE_CHANNEL';
-  private window: BrowserWindow|null;
-  private app: App|null;
+  private readonly workspaces: BrowserWindow;
+  private readonly wpMap: Map<number, string>;
   getName(): string {
     return CloseChannel.CLOSE_CHANNEL;
   }
-  constructor(window : BrowserWindow, app : App){
-    this.window = window;
-    this.app = app;
-    this.window?.once('close', (e) => {
-        e.preventDefault();
-        this.send();
-      })
+  constructor(main : BrowserWindow, wpMap : Map<number,string>){
+    this.workspaces = main;
+    this.wpMap = wpMap;
   }
 
-  send(args ?: any) : void{
-    this.window?.webContents.send(this.getName());
+  send(toWin: BrowserWindow, args?: any): void {
+    toWin.once('close', (e) => {
+      e.preventDefault();
+      //this.send();
+      toWin.webContents.send(this.getName());
+    })
   }
 
-  once(event: IpcMainEvent, response: any): void {
-    this.window = null;
-    if (process.platform !== 'darwin') {
-      this.app?.quit();
-      this.app = null;
-    }
+  once(event: IpcMainEvent, response: any): void {}
+  
+  on(event: IpcMainEvent, response: any) : void {
+    const wpWin = BrowserWindow.fromWebContents(event.sender)!;
+    this.wpMap.delete(wpWin.webContents.id);
+    wpWin.close();
+    //this.wp = null;
+    this.workspaces.webContents.send("Workspaces","updateWP");
+    this.workspaces.show();
   }
-  // on(event: IpcMainEvent, response: any) : void {}
 }

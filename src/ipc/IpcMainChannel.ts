@@ -1,9 +1,9 @@
-import {IpcMainEvent} from 'electron';
+import {BrowserWindow, IpcMainEvent} from 'electron';
 
 export interface IpcMainChannel {
   getName(): string;
   
-  send(args ?: any) : void;
+  send(toWin : BrowserWindow, args ?: any) : void;
 
   once?(event: IpcMainEvent, response: any): void;
 

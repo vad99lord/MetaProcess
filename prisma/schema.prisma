@@ -30,6 +30,8 @@ model Edge {
   startVertex Vertex  @relation("Edge_startIDToVertex", fields: [startID], references: [id])
   files    File[]
   directories Directory[]
+  workspaceID String 
+  workspace  Workspace  @relation(fields: [workspaceID], references: [id])
 }
 
 model File {
@@ -57,4 +59,14 @@ model Vertex {
   directories Directory[]
   x          Float     @default(0)
   y          Float     @default(0)
+  workspaceID String 
+  workspace  Workspace  @relation(fields: [workspaceID], references: [id])
+}
+
+model Workspace {
+  id         String     @id @default(cuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  edges    Edge[]
+  vertices Vertex[]
 }

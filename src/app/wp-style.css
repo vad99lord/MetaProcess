@@ -1,0 +1,21 @@
+body,h1 {
+    margin:0;
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+thead {
+  font-weight: bold;
+}
+table {
+    margin: 30px auto;
+}
+
+.main {
+  margin: 0 auto;
+  width: max-content;
+  /* background-color: crimson; */
+  height: 100vh;
+}

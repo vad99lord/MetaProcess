@@ -26,12 +26,13 @@ export class VertexApi_ {
         return users;
     }
 
-    public async findElements(params: {searchName: string}){
+    public async findElements(params: {searchName: string, wpID : string}){
         let findVArgs = {
             where : {
                 name : {
                     contains : params.searchName,
-                }
+                },
+                workspaceID : params.wpID,
             }
         };
         const verts = await prisma.vertex.findMany(findVArgs);
@@ -67,7 +68,7 @@ export class VertexApi_ {
         return ele;
     }
 
-    public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean}){
+    public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean, wpID : string}){
         const edge = await prisma.edge.create({
             data : {
                 name : params.name,
@@ -82,21 +83,32 @@ export class VertexApi_ {
                     }
                 },
                 inMeta : params.inMeta ?? false,
+                workspace : {
+                    connect : {
+                        id : params.wpID
+                    }
+                }
             }
         })
         return edge;
     }
-    public async createVertex(params : {name : string, meta? : boolean}){
+
+    public async createVertex(params : {name : string, meta? : boolean, wpID : string}){
         const vertex = await prisma.vertex.create({
             data : {
                 name : params.name,
                 meta : params.meta ?? false,
+                workspace : {
+                    connect : {
+                        id : params.wpID
+                    }
+                } 
             }
         })
         return vertex;
     }
 
-    public async getCytoVertices(params: {vertexID ?: string[]}){
+    public async getCytoVertices(params: {vertexID ?: string[], wpID : string}){
         let vertexParams = {
             select : {
                 id : true,
@@ -114,7 +126,8 @@ export class VertexApi_ {
                 y : true
             },
             where : {
-                id : {}
+                id : {},
+                workspaceID : params.wpID
             }
         }
         if (!_.isNil(params?.vertexID)){
@@ -131,7 +144,7 @@ export class VertexApi_ {
         return cytoVerts;
     }
 
-    public async getCytoEdges(params: {edgeID ?: string[]}){
+    public async getCytoEdges(params: {edgeID ?: string[], wpID : string}){
         const edgesParams = {
             select : {
                 id: true,
@@ -141,7 +154,8 @@ export class VertexApi_ {
             },
             where : {
                 inMeta : false,
-                id : {}
+                id : {},
+                workspaceID : params.wpID
             }
         }
         if (!_.isNil(params?.edgeID)){
@@ -253,15 +267,16 @@ export class VertexApi_ {
         return delEles;
     }
 
-    public async unionParent(params: {unionName: string, childrenID: string[] , unionParentID? : string}){
-        let metaV = await this.createVertex({name : params.unionName, meta : true});
-        metaV = await this.includeParent({parentID: metaV.id, childrenID: params.childrenID})
+    public async unionParent(params: {unionName: string, childrenID: string[] , unionParentID? : string, wpID : string}){
+        let metaV = await this.createVertex({name : params.unionName, meta : true, wpID : params.wpID});
+        metaV = await this.includeParent({parentID: metaV.id, childrenID: params.childrenID, wpID : params.wpID});
         if (!_.isNil(params.unionParentID)){
             await this.createEdge({
                 name: VertexApi_.createMetaEdgeName(metaV.id),
                 startID : params.unionParentID!,
                 endID : metaV.id,
                 inMeta : true,
+                wpID : params.wpID
             })
         }
         return metaV;
@@ -273,7 +288,7 @@ export class VertexApi_ {
         })
     }
 
-    public async includeParent(params: {parentID: string, childrenID: string[]}){
+    public async includeParent(params: {parentID: string, childrenID: string[], wpID : string}){
         await prisma.edge.deleteMany({
             where : {
                 endID : {
@@ -306,7 +321,12 @@ export class VertexApi_ {
                             id : childID
                         }
                     },
-                    inMeta : true
+                    inMeta : true,
+                    workspace : {
+                        connect : {
+                            id : params.wpID
+                        }
+                    }
                 }
             })
         }));

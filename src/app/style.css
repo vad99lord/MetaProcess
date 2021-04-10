@@ -86,8 +86,15 @@ ul {
   margin-bottom: 15px;
 }
 
-/* Clear floats after the columns */
+/* Clear floats afteAr the columns */
 .row {
   display: flex;
   height: 100%;
+}
+#wp-name {
+  margin: 10px;
+  display: block;
+  border:none;
+  border-bottom: 1px solid black;
+  font-size : large
 }

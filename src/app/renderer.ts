@@ -12,7 +12,12 @@ import { FileChannel } from "../ipc/FileChannel";
 import { IpcHandler } from "../ipc/IpcHandler";
 import { CloseChannel } from "../ipc/CloseChannel";
 import { clone } from "lodash";
-const { ipcRenderer} = require('electron');
+import { Workspace } from ".prisma/client";
+import {ipcRenderer} from 'electron';
+import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
+import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
+import { ClassMethods } from "../ipc/RemoteApi";
+//const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
 
 //TODO: REMOVE! DEBUG for reload after actions
 const {getCurrentWindow} = require('electron').remote;
@@ -25,27 +30,75 @@ const ipc = new IpcService(ipcRenderer);
 
 const handler = new IpcHandler(ipcRenderer);
 
-handler.handleOnce(CloseChannel.CLOSE_CHANNEL,(ev,req)=>{
+initWorkspace();
+
+function savePositions(){
   const vPos : VertexPos[] = cy.nodes().map((n)=>{
     return {id : n.id(), pos : n.position()}
   })
   let posParams : VertexApi<"updatePositions"> = {method : "updatePositions", params : [{vPos : vPos}]}
   return ipc.send<VertexApiReturn<"updatePositions">>(QueryChannel.QEURY_CHANNEL, posParams);
+}
+
+function saveWpName(){
+  let saveParams : AttributeApi<"updateWorkspace"> = {method : "updateWorkspace", params : [{wpID : workSpace!.id,newName : workSpace!.name}]}
+  return ipc.send<AttributeApiReturn<"updateWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, saveParams);
+}
+
+/*
+handler.handleOnce(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
+    let savePromise = savePositions().then(()=>saveWpName());
+    return savePromise;
+});*/
+
+ipcRenderer.once(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
+  let userReq = req as WorkspaceWinApi<ClassMethods<WorkspaceWinApi_>>;
+  if (userReq.method!=="saveWorkspace"){
+    return;
+  }
+  let savePromise = savePositions().then(()=>saveWpName());
+  savePromise.then((wp)=>{
+    let closeParams : WorkspaceApi<"closeWorkspace"> = {method : "closeWorkspace", params : [{}]}
+    return ipc.send<WorkspaceApiReturn<"closeWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, closeParams);  
+  });
 });
 
 document.getElementById('reload')!.addEventListener('click', () => {
   reloadWindow();
 });
 
+//TODO: introduce wp local params in function for readability
+let workSpace : Workspace | null = null;
+let cy : cytoscape.Core;
+function initWorkspace(){
+  /*ipc.send<FileApiReturn<"checkDocsExist">>(FileChannel.FILE_CHANNEL, {method : "checkDocsExist", params : []});
+  const wpParams : AttributeApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
+  return ipc.send<AttributeApiReturn<"getWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, wpParams).then((wp)=>{
+      workSpace = wp;
+      (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
+      cy = initGraph();
+      //TODO move to func or introduce a param
+      setTreeMode();
+    });*/
+    let getParams : WorkspaceApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
+    ipc.send<WorkspaceApiReturn<"getWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, getParams).then((wp)=>{
+      if (_.isNil(wp))
+        return;
+      workSpace = wp;
+      (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
+      cy = initGraph();
+      setTreeMode();
+    })
+}
 
+function initGraph() : cytoscape.Core{
 //get edges and vertices in cytoscape format
-let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, {method : "getCytoVertices", params : []});
-let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, {method : "getCytoEdges", params : []});
+let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{wpID : workSpace!.id}]};
+let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{wpID : workSpace!.id}] };
+let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, vParams);
+let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, eParams);
 //merge nodes and vertices in one promise
 let cve = Promise.all([ce,cv]).then(([ce,cv]) => {return [...ce, ...cv]});
-
-ipc.send<FileApiReturn<"checkDocsExist">>(FileChannel.FILE_CHANNEL, {method : "checkDocsExist", params : []});
-
 const cy = cytoscape({
   container: document.getElementById('cy'),
   boxSelectionEnabled: false,
@@ -100,8 +153,36 @@ const cy = cytoscape({
 });
 //center graph in window
 cy.center();
+cy.on('tap', function(event){
+  let evtTarget = event.target;
+  if (evtTarget === cy){
+    //document.getElementById('docs-table')!.innerHTML="";
+    //document.getElementById('elem-name')!.innerHTML = "";
+    return;
+  }
+  const ele : cytoscape.SingularData = evtTarget;
 
-setTreeMode();
+  let eleType : "Edge"|"Vertex" = ele.isNode() ? "Vertex" : "Edge";
+  let attrParams : AttributeApi<"getElementDocuments"> = {
+    method : "getElementDocuments", 
+    params : [{ele: eleType,id : ele.id()}
+  ]};
+  ipc.send<AttributeApiReturn<"getElementDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, attrParams).then((ele) => {
+    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;
+    
+    const tableDiv = document.getElementById('docs-table')!;
+    tableDiv.innerHTML = "";
+    tableDiv.appendChild(createTable(ele));
+  });
+
+});
+return cy;
+}
+
+document.getElementById('wp-name')!.addEventListener('input',(ev) => {
+  const wpInput = <HTMLInputElement>ev.target;
+  workSpace!.name = wpInput.value;
+});
 
 function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
   // console.log(source.id());
@@ -111,7 +192,7 @@ function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingula
     return;
   }
   let edgeParams : VertexApi<"createEdge"> = {method : "createEdge", params : 
-    [{name : "testEdge",startID : source.id(), endID : target.id()}]
+    [{name : "testEdge",startID : source.id(), endID : target.id(), wpID : workSpace!.id}]
   }
   ipc.send<VertexApiReturn<"createEdge">>(QueryChannel.QEURY_CHANNEL, edgeParams).then((edge) => {
     cy.add([
@@ -150,7 +231,7 @@ function makeid(length: number) {
 
 
 function addVertex(){
-  let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "testVertex"}]};
+  let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "testVertex",wpID : workSpace!.id}]};
   ipc.send<VertexApiReturn<"createVertex">>(QueryChannel.QEURY_CHANNEL, vetrexParams).then((vertex) => {
     //make sure added vertex is centered in visible model part
     const ex = cy.extent()
@@ -184,7 +265,7 @@ function unionParent(){
 
   let unionParams : VertexApi<"unionParent"> = {
     method : "unionParent", 
-    params : [{unionName : "testUnionVertex",childrenID : childrenID, unionParentID : unionParentID}]};
+    params : [{unionName : "testUnionVertex",childrenID : childrenID, unionParentID : unionParentID, wpID : workSpace!.id}]};
   ipc.send<VertexApiReturn<"unionParent">>(QueryChannel.QEURY_CHANNEL, unionParams).then((unionParent) => {
     cy.add([
       { group: 'nodes', data: { id: unionParent.id, name : unionParent.name, parent : unionParentID}}
@@ -219,7 +300,7 @@ function includeParent(){
 
     let includeParams : VertexApi<"includeParent"> = {
       method : "includeParent", 
-      params : [{parentID : parentID,childrenID : childrenID}]};
+      params : [{parentID : parentID,childrenID : childrenID, wpID : workSpace!.id}]};
     ipc.send<VertexApiReturn<"includeParent">>(QueryChannel.QEURY_CHANNEL, includeParams).then((parent) => {
         nodes.move({parent: parent.id});
         mainParent = [];  
@@ -292,30 +373,6 @@ document.getElementById('remove parent')!.addEventListener('click',() => {
   removeParent();
 });
 
-
-cy.on('tap', function(event){
-  let evtTarget = event.target;
-  if (evtTarget === cy){
-    //document.getElementById('docs-table')!.innerHTML="";
-    //document.getElementById('elem-name')!.innerHTML = "";
-    return;
-  }
-  const ele : cytoscape.SingularData = evtTarget;
-
-  let eleType : "Edge"|"Vertex" = ele.isNode() ? "Vertex" : "Edge";
-  let attrParams : AttributeApi<"getElementDocuments"> = {
-    method : "getElementDocuments", 
-    params : [{ele: eleType,id : ele.id()}
-  ]};
-  ipc.send<AttributeApiReturn<"getElementDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, attrParams).then((ele) => {
-    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;
-    
-    const tableDiv = document.getElementById('docs-table')!;
-    tableDiv.innerHTML = "";
-    tableDiv.appendChild(createTable(ele));
-  });
-
-});
 
 document.getElementById('update-elem-name')!.addEventListener('click',() => {
   let eles = cy.elements(":selected");
@@ -586,7 +643,7 @@ function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocument
 
 
 function findElementsWithDocs(searchValue : string) {
-  let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue }] };
+  let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<VertexApiReturn<"findElements">>(QueryChannel.QEURY_CHANNEL, searchParams).then((eles) => {
     let vIDs: { name: string, ids: string[] }[] = [];
     if (!_.isEmpty(eles.vertices)) {
@@ -678,7 +735,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
 
 
 function findDocumentsWithElements(searchValue : string) {
-  let searchParams: AttributeApi<"findDocumentsElements"> = { method: "findDocumentsElements", params: [{ searchName: searchValue }] };
+  let searchParams: AttributeApi<"findDocumentsElements"> = { method: "findDocumentsElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<AttributeApiReturn<"findDocumentsElements">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((docEles) => {
     if (_.isEmpty(docEles)) {
       return;
@@ -740,10 +797,10 @@ function cloneElements(){
 
   let cloneParams : AttributeApi<"cloneElementsDocuments"> = {
     method : "cloneElementsDocuments", 
-    params : [{VIDs: nodesID, EIDs: edgesID}]};
+    params : [{VIDs: nodesID, EIDs: edgesID, wpID : workSpace!.id}]};
   ipc.send<AttributeApiReturn<"cloneElementsDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, cloneParams).then((eleIDs) => {
-    let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{vertexID : eleIDs.VIDs}]};
-    let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{ edgeID: eleIDs.EIDs }] };
+    let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{vertexID : eleIDs.VIDs, wpID : workSpace!.id}]};
+    let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{ edgeID: eleIDs.EIDs, wpID : workSpace!.id }] };
       let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, vParams);
       let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, eParams);
       Promise.all([ce,cv]).then(([ce,cv]) => {
@@ -783,3 +840,8 @@ document.getElementById('graph-mode')!.addEventListener('click',(e) => {
   }
   console.log("Clicked, new value = " + cb.checked);
 });
+
+/*
+document.getElementById('choose-wp')!.addEventListener('click',(e) => {
+  ipcRenderer.send("Workspace","chooseWP");
+});*/

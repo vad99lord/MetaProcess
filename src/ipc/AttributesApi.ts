@@ -3,6 +3,8 @@ import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import { Element,ElementType } from './FilesApi';
 import cuid from 'cuid';
 import * as _ from "lodash";
+import { identity } from 'lodash';
+import { VertexApi_ } from './VerticesApi';
 
 
 export interface AttributeApi<T extends ClassMethods<AttributeApi_>> extends RemoteApi{
@@ -32,8 +34,8 @@ interface E extends Element {
 
 export class AttributeApi_ {
 
-
-    public async cloneElementsDocuments(params: {VIDs: string[], EIDs : string[]} ){
+    //TODO: check if coords copying is needed somewhere ??
+    public async cloneElementsDocuments(params: {VIDs: string[], EIDs : string[], wpID : string} ){
         const suffix = "_clone";
         
         const sourceV = await prisma.vertex.findMany({
@@ -121,7 +123,8 @@ export class AttributeApi_ {
                 data : {
                     name : sV.name+suffix,
                     meta : sV.meta,
-                    id : VIDsMap.get(sV.id)
+                    id : VIDsMap.get(sV.id),
+                    workspaceID : params.wpID
                 }
             });
             // VIDsMap.set(sV.id,cV.id);
@@ -140,7 +143,8 @@ export class AttributeApi_ {
                     inMeta : sE.inMeta,
                     startID : VIDsMap.get(sE.startID)!,
                     endID : VIDsMap.get(sE.endID)!,
-                    id : EIDsMap.get(sE.id)!
+                    id : EIDsMap.get(sE.id)!,
+                    workspaceID : params.wpID
                 }
             });
             //cEPromise.then((cE)=>EIDsMap.set(sE.id,cE.id));
@@ -250,18 +254,38 @@ export class AttributeApi_ {
         return elesDocs;
     }
     
-    public async findDocumentsElements(params: {searchName: string}){
+    public async findDocumentsElements(params: {searchName: string, wpID : string}){
         const findArgs = {
             where : {
                 name : {
                     contains : params.searchName,
+                },
+                OR : [{
+                    vertices : {
+                    some : {
+                        workspaceID : params.wpID
+                    }
                 }
             },
+                {
+                    edges : {
+                    some : {
+                        workspaceID : params.wpID,
+                        inMeta : false
+                    }
+                }
+            }]
+            },
             include : {
-                vertices : true,
+                vertices : {
+                    where : {
+                        workspaceID : params.wpID
+                    }
+                },
                 edges : {
                     where : {
                         inMeta : false,
+                        workspaceID : params.wpID
                     }    
                 }
             }
@@ -323,6 +347,63 @@ export class AttributeApi_ {
         
         const elemDocs : ElementDocuments = {name : eleDocs!.name, documents: docs}
         return  elemDocs;
+    }
+
+    public async getWorkspace(params : {wpID ?: string}){
+        const wp = !_.isNil(params.wpID) 
+                        ? await prisma.workspace.findUnique({where : {id : params.wpID}})
+                        : await prisma.workspace.findFirst();
+        return wp;
+    }
+
+    public async getWorkspaces(params ?: any){
+        const wp = await prisma.workspace.findMany({orderBy : {createdAt : "desc"}});
+        return wp;
+    }
+
+    public async deleteWorkspace(params : {wpID : string}){
+        const wp = await prisma.workspace.findUnique({
+            where : {
+                id : params.wpID
+            },
+            include : {
+                edges : {
+                    select : {
+                        id : true
+                    }
+                },
+                vertices : {
+                    select : {
+                        id : true
+                    }
+                }
+            }
+        })
+        const delV = await VertexApi_.prototype["deleteVertex"]({verticesID : _.map(wp!.vertices,"id")});
+        const delE = await VertexApi_.prototype["deleteEdge"]({edgesID : _.map(wp!.edges,"id")});
+        const delWp = await prisma.workspace.delete({where : {id : wp!.id}});
+        return delWp;
+    }
+
+    public async updateWorkspace(params : {wpID : string, newName : string}){
+        const wp = await prisma.workspace.update({
+            where : {
+                id : params.wpID
+            },
+            data : {
+                name : params.newName
+            }
+        });
+        return wp;
+    }
+
+    public async createWorkspace(params : {name : string}){
+        const wp = await prisma.workspace.create({
+            data : {
+                name : params.name
+            }
+        });
+        return wp;
     }
 
     //unused method for type resolving in channels
