@@ -13,14 +13,6 @@ import { IpcSender } from "../ipc/IpcSender";
 
 const ipc = new IpcService(ipcRenderer);
 
-/*
-ipcRenderer.on("Workspaces",(ev,req)=>{
-    if (req!=="updateWP"){
-        return;
-    }
-    getWorkspaces();
-})*/
-
 ipcRenderer.on(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
     let userReq = req as WorkspaceWinApi<ClassMethods<WorkspaceWinApi_>>;
     if (userReq.method!=="updateWorkspace"){
@@ -65,8 +57,6 @@ function createRow(tableBody: HTMLTableSectionElement, wp: Workspace) {
         //send wp to main window for opening
         let openParams : WorkspaceApi<"createWorkspace"> = {method : "createWorkspace", params : [{wpID : wp.id}]}
         ipc.send<WorkspaceApiReturn<"createWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, openParams);      
-        //ipcRenderer.send("Workspace",wp.id);
-        //console.log(wp);
     });
     row.addEventListener('contextmenu', (e) => {
         let delParams: AttributeApi<"deleteWorkspace"> = {

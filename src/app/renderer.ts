@@ -45,11 +45,6 @@ function saveWpName(){
   return ipc.send<AttributeApiReturn<"updateWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, saveParams);
 }
 
-/*
-handler.handleOnce(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
-    let savePromise = savePositions().then(()=>saveWpName());
-    return savePromise;
-});*/
 
 ipcRenderer.once(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
   let userReq = req as WorkspaceWinApi<ClassMethods<WorkspaceWinApi_>>;
@@ -71,15 +66,6 @@ document.getElementById('reload')!.addEventListener('click', () => {
 let workSpace : Workspace | null = null;
 let cy : cytoscape.Core;
 function initWorkspace(){
-  /*ipc.send<FileApiReturn<"checkDocsExist">>(FileChannel.FILE_CHANNEL, {method : "checkDocsExist", params : []});
-  const wpParams : AttributeApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
-  return ipc.send<AttributeApiReturn<"getWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, wpParams).then((wp)=>{
-      workSpace = wp;
-      (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
-      cy = initGraph();
-      //TODO move to func or introduce a param
-      setTreeMode();
-    });*/
     let getParams : WorkspaceApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
     ipc.send<WorkspaceApiReturn<"getWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, getParams).then((wp)=>{
       if (_.isNil(wp))
@@ -87,6 +73,7 @@ function initWorkspace(){
       workSpace = wp;
       (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
       cy = initGraph();
+      //TODO move to func or introduce a param
       setTreeMode();
     })
 }
