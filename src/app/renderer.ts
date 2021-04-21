@@ -41,7 +41,9 @@ function savePositions(){
 }
 
 function saveWpName(){
-  let saveParams : AttributeApi<"updateWorkspace"> = {method : "updateWorkspace", params : [{wpID : workSpace!.id,newName : workSpace!.name}]}
+  let saveParams : AttributeApi<"updateWorkspace"> = {method : "updateWorkspace", params : [{
+    wpID : workSpace!.id,newName : workSpace!.name,newMode : workSpace!.isTreeMode,
+  }]}
   return ipc.send<AttributeApiReturn<"updateWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, saveParams);
 }
 
@@ -62,9 +64,9 @@ document.getElementById('reload')!.addEventListener('click', () => {
   reloadWindow();
 });
 
-//TODO: introduce wp local params in function for readability
 let workSpace : Workspace | null = null;
 let cy : cytoscape.Core;
+
 function initWorkspace(){
     let getParams : WorkspaceApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
     ipc.send<WorkspaceApiReturn<"getWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, getParams).then((wp)=>{
@@ -72,20 +74,24 @@ function initWorkspace(){
         return;
       workSpace = wp;
       (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
-      cy = initGraph();
-      //TODO move to func or introduce a param
-      setTreeMode();
+      cy = initGraph(workSpace.isTreeMode);
+      
+      (<HTMLInputElement>document.getElementById('graph-mode')!).checked = workSpace.isTreeMode;
+      setWorkspaceMode(workSpace);
     })
 }
 
-function initGraph() : cytoscape.Core{
+function initGraph(isTreeMode : boolean) : cytoscape.Core{
 //get edges and vertices in cytoscape format
 let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{wpID : workSpace!.id}]};
 let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{wpID : workSpace!.id}] };
 let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, vParams);
 let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, eParams);
 //merge nodes and vertices in one promise
-let cve = Promise.all([ce,cv]).then(([ce,cv]) => {return [...ce, ...cv]});
+let cve = Promise.all([ce,cv]).then(([ce,cv]) => {
+  ce = _.map(ce,e=>_.assign(e, {classes: isTreeMode ? "tree-edges" : "process-edges"}));
+  return [...ce, ...cv]
+});
 const cy = cytoscape({
   container: document.getElementById('cy'),
   boxSelectionEnabled: false,
@@ -182,9 +188,10 @@ function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingula
     [{name : "testEdge",startID : source.id(), endID : target.id(), wpID : workSpace!.id}]
   }
   ipc.send<VertexApiReturn<"createEdge">>(QueryChannel.QEURY_CHANNEL, edgeParams).then((edge) => {
-    cy.add([
+    const cyEdge = cy.add([
       { group: 'edges', data: { id: edge.id, source: edge.startID, target: edge.endID, name : edge.name}}
     ]);
+    setEdgeStyle(cyEdge.edges(),workSpace!);
   });
 }
 
@@ -812,7 +819,9 @@ function cloneElements(){
         });
         const cloneEles = [...ce, ...cv];
         cy.elements().unselect();
-        cy.add(cloneEles).select();
+        const cytoEles = cy.add(cloneEles);
+        setEdgeStyle(cytoEles.edges(),workSpace!);
+        cytoEles.select();
       });
   });
 }
@@ -821,24 +830,53 @@ document.getElementById('clone elements')!.addEventListener('click',() => {
 });
 
 
+
+function setEdgeStyle(edges : cytoscape.EdgeCollection, wp : Workspace){
+  if (wp.isTreeMode){
+    setTreeEdges(edges);
+  }
+  else {
+    setProcessEdges(edges);
+  }
+}
+function setTreeEdges(edges : cytoscape.EdgeCollection){
+  edges.removeClass("process-edges");
+  edges.addClass("tree-edges");
+}
+
+function setProcessEdges(edges : cytoscape.EdgeCollection){
+  edges.removeClass("tree-edges");
+  edges.addClass("process-edges");
+}
+
+
+function setWorkspaceMode(wp : Workspace){
+  if (wp.isTreeMode){
+    setTreeMode();
+  }
+  else {
+    setProcessMode();
+  }
+}
+
 function setTreeMode(){
   const cloneBtn = document.getElementById('clone elements')!;
   cloneBtn.style.visibility = 'hidden';
   cloneBtn.style.display = 'none';
-  cy.edges().removeClass("process-edges");
-  cy.edges().addClass("tree-edges");
+  workSpace!.isTreeMode = true;
+  setTreeEdges(cy.edges());
 }
 
 function setProcessMode(){
   const cloneBtn = document.getElementById('clone elements')!;
   cloneBtn.style.visibility = 'visible';
   cloneBtn.style.display = 'inline-block';
-  cy.edges().removeClass("tree-edges");
-  cy.edges().addClass("process-edges");
+  workSpace!.isTreeMode = false;
+  setProcessEdges(cy.edges());
 }
 
 document.getElementById('graph-mode')!.addEventListener('click',(e) => {
-  const cb = <HTMLInputElement> e.target
+  const cb = <HTMLInputElement> e.target;
   if (cb.checked){
     setTreeMode();
   }

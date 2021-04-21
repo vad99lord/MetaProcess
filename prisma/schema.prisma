@@ -67,6 +67,7 @@ model Workspace {
   id         String     @id @default(cuid())
   name       String
   createdAt  DateTime   @default(now())
+  isTreeMode Boolean    @default(true)
   edges    Edge[]
   vertices Vertex[]
 }

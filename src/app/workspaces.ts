@@ -25,7 +25,7 @@ function createTable(data: AttributeApiReturn<"getWorkspaces">) {
     const table = document.createElement('table');
     const tableHead = document.createElement('thead');
     let row = document.createElement('tr');
-    for (let wpProp in _.omit(_.first(data)!, ["id"])) {
+    for (let wpProp in _.omit(_.first(data)!, ["id","isTreeMode"])) {
         let cell = document.createElement('td');
         cell.appendChild(document.createTextNode(wpProp));
         row.appendChild(cell);

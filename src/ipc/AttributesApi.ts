@@ -385,13 +385,14 @@ export class AttributeApi_ {
         return delWp;
     }
 
-    public async updateWorkspace(params : {wpID : string, newName : string}){
+    public async updateWorkspace(params : {wpID : string, newName : string, newMode : boolean}){
         const wp = await prisma.workspace.update({
             where : {
                 id : params.wpID
             },
             data : {
-                name : params.newName
+                name : params.newName,
+                isTreeMode : params.newMode
             }
         });
         return wp;
