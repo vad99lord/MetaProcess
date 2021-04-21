@@ -782,17 +782,37 @@ function cloneElements(){
     return ele.id();
   });
 
+  const cloneOffset : cytoscape.Position = {
+    x : 200,
+    y : 200
+  }
+
   let cloneParams : AttributeApi<"cloneElementsDocuments"> = {
     method : "cloneElementsDocuments", 
     params : [{VIDs: nodesID, EIDs: edgesID, wpID : workSpace!.id}]};
   ipc.send<AttributeApiReturn<"cloneElementsDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, cloneParams).then((eleIDs) => {
-    let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{vertexID : eleIDs.VIDs, wpID : workSpace!.id}]};
-    let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{ edgeID: eleIDs.EIDs, wpID : workSpace!.id }] };
+    let vParams: VertexApi<"getCytoVertices"> = { method: "getCytoVertices", params: [{vertexID : Array.from(eleIDs.VIDs.values()), wpID : workSpace!.id}]};
+    let eParams: VertexApi<"getCytoEdges"> = { method: "getCytoEdges", params: [{ edgeID: Array.from(eleIDs.EIDs.values()), wpID : workSpace!.id }] };
       let cv : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoVertices">>(QueryChannel.QEURY_CHANNEL, vParams);
       let ce : Promise<ElementDefinition[]> = ipc.send<VertexApiReturn<"getCytoEdges">>(QueryChannel.QEURY_CHANNEL, eParams);
+      
+      const clonedPos = new Map<string,cytoscape.Position>();
+      eleIDs.VIDs.forEach((val, key) => {
+         const sourceP = nChilds.getElementById(key).position();
+         const cloneP : cytoscape.Position = {
+           x : sourceP.x + cloneOffset.x,
+           y :sourceP.y + cloneOffset.y
+         };
+         clonedPos.set(val,cloneP);
+      });
+
       Promise.all([ce,cv]).then(([ce,cv]) => {
+        _.forEach(cv,(v)=>{
+            v.position = clonedPos.get(v.data.id!);
+        });
         const cloneEles = [...ce, ...cv];
-        cy.add(cloneEles);
+        cy.elements().unselect();
+        cy.add(cloneEles).select();
       });
   });
 }

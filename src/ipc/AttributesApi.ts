@@ -187,7 +187,7 @@ export class AttributeApi_ {
         });
 
         await prisma.$transaction([...cloneV,...cloneE,...cloneF,...cloneD]);
-        const eleIDs = {VIDs : Array.from(VIDsMap.values()),EIDs : Array.from(EIDsMap.values())};
+        const eleIDs = {VIDs : VIDsMap,EIDs : EIDsMap};
         return eleIDs;
     }
     
