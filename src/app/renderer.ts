@@ -213,6 +213,54 @@ document.getElementById('add edge')!.addEventListener('click',() => {
   cy.addListener('select','node', onAddEdge());
 });
 
+let mainV: cytoscape.EdgeSingular[] = [];
+function addSrcEdges(){
+  if (_.isEmpty(mainV)){
+    cy.one('select','node', (evt) => {
+      mainV.push(evt.target);
+    });
+  }
+  else {
+    const src = _.first(mainV)!;
+    let dests = cy.nodes(":selected").subtract(src);
+    if (dests.empty()){
+      return;
+    }
+
+    let srcID = src.id();
+    const destIDs = dests.map(function( ele ){
+      return ele.id();
+    });
+
+    let edgesParams : VertexApi<"createSourceEdges"> = {
+      method : "createSourceEdges", 
+      params : [{name : "testEdge",startID : srcID, endID : destIDs, wpID : workSpace!.id}]};
+    ipc.send<VertexApiReturn<"createSourceEdges">>(QueryChannel.QEURY_CHANNEL, edgesParams).then((edges) => {
+      const cytoEdges = _.map(edges,(edge)=>{
+        const ce : ElementDefinition = { 
+          group: 'edges',
+          data: {
+             id: edge.id,
+             source: edge.startID,
+             target: edge.endID,
+             name : edge.name
+            }
+          }
+        return ce;  
+      });
+      const cyEdges = cy.add(cytoEdges);
+      setEdgeStyle(cyEdges.edges(),workSpace!);
+      mainV = [];  
+    });
+
+    /*nodes.move({parent: _.first(mainParent)!.id()});
+    mainParent = [];  */
+  }
+}
+document.getElementById('add src edges')!.addEventListener('click',() => {
+  addSrcEdges();
+});
+
 function makeid(length: number) {
    var result           = '';
    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

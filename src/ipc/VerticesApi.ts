@@ -4,6 +4,7 @@ import {EdgeDefinition, ElementDefinition, NodeDefinition,Position} from 'cytosc
 import { edges, vertices } from '../../prisma/mocks';
 import {Element, ElementType} from './FilesApi';
 import * as _ from "lodash";
+import cuid from 'cuid';
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
     method : T,
@@ -16,6 +17,9 @@ export type VertexPos = Prisma.VertexGetPayload<{
     select: { id: true}
   }> & {pos : Position}
 
+export type EdgeData = Prisma.EdgeGetPayload<{
+    select: { name: true, startID : true, endID : true}
+  }>
 
 const prisma = new PrismaClient();
 
@@ -67,6 +71,43 @@ export class VertexApi_ {
         }
         return ele;
     }
+
+
+    public async createSourceEdges(params: {name : string, startID : string, endID : string[], inMeta ?: boolean, wpID : string}){
+        const edges : EdgeData[] = _.map(params.endID,(eID)=>{
+            return {name : params.name,startID : params.startID,endID : eID};
+        })
+        return this.createManyEdges({edges : edges, inMeta : params.inMeta, wpID : params.wpID});
+    }
+
+    private async createManyEdges(params: {edges : EdgeData[], inMeta ?: boolean, wpID : string}){
+        const edgesID = _.times(params.edges.length,cuid);
+        const edgesPromise = _.map(_.zip(edgesID,params.edges),(e) => prisma.edge.create({
+                data : {
+                    id : e[0]!,
+                    name : e[1]!.name,
+                    startVertex : {
+                        connect : {
+                            id : e[1]!.startID
+                        }
+                    },
+                    endVertex : {
+                        connect : {
+                            id : e[1]!.endID
+                        }
+                    },
+                    inMeta : params.inMeta ?? false,
+                    workspace : {
+                        connect : {
+                            id : params.wpID
+                        }
+                    }
+                }
+            }));
+        await prisma.$transaction(edgesPromise);
+        const edges = await prisma.edge.findMany({where : {id : {in : edgesID}}});
+        return edges;    
+    } 
 
     public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean, wpID : string}){
         const edge = await prisma.edge.create({
@@ -306,30 +347,10 @@ export class VertexApi_ {
             }
         })
 
-        let edges = await Promise.all(_.map(params.childrenID,async (childID) => {
-            let edgeName = VertexApi_.createMetaEdgeName(childID);
-            return await prisma.edge.create({
-                data : {
-                    name : edgeName,
-                    startVertex : {
-                        connect : {
-                            id : metaV.id
-                        }
-                    },
-                    endVertex : {
-                        connect : {
-                            id : childID
-                        }
-                    },
-                    inMeta : true,
-                    workspace : {
-                        connect : {
-                            id : params.wpID
-                        }
-                    }
-                }
-            })
-        }));
+        const eData : EdgeData[] = _.map(params.childrenID,(childID)=>{
+            return {name : VertexApi_.createMetaEdgeName(childID),startID : metaV.id,endID : childID}; 
+        });
+        const edges = this.createManyEdges({edges : eData, inMeta : true, wpID : params.wpID});
         return metaV;
     }
 
