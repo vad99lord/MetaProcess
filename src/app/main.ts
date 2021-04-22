@@ -5,6 +5,7 @@ import { AttributeApi_ } from '../ipc/AttributesApi';
 import { AttributeChannel } from '../ipc/AttributesChannel';
 import { CloseChannel } from '../ipc/CloseChannel';
 import { FileChannel } from '../ipc/FileChannel';
+import { FileApi_ } from '../ipc/FilesApi';
 import { IpcMainChannel } from '../ipc/IpcMainChannel';
 import { IpcSender } from '../ipc/IpcSender';
 import { QueryChannel } from '../ipc/QueryChannel';
@@ -128,7 +129,9 @@ function registerIpcChannels(ipcChannels: IpcChannelInterface[]) {
   ipcChannels.forEach(channel => ipcMain.handle(channel.getName(), (event, request) => channel.handle(event, request)));
 }
 
-// Here we go!
+//update files status
+FileApi_.prototype["checkDocsExist"]({});
+
 const wp = new Workspace();
 
 registerIpcChannels([new QueryChannel(),new AttributeChannel(), new FileChannel(),new WorkspaceChannel(wp)]);
