@@ -54,8 +54,12 @@ export class Workspace implements WorkspaceApi_{
         nodeIntegration: true, // makes it possible to use `require` within our index.html
         enableRemoteModule : true, // remove remove after debugging!
       },
+      show : false
     });
     this.wpListWindow.loadFile('./src/app/workspaces.html');
+    this.wpListWindow.once('ready-to-show', () => {
+      this.wpListWindow!.show();
+    })
   }
 
   public closeWorkspace(params : {ev : IpcMainInvokeEvent}){
@@ -76,8 +80,19 @@ export class Workspace implements WorkspaceApi_{
   }
 
   public createWorkspace(params : {ev ?: IpcMainInvokeEvent,wpID : string}){
-      this.wpListWindow!.hide();
-      const wpWin = this.createWorkspaceWin();
+      const wpWin = this.createWorkspaceWin();  
+      wpWin.once('ready-to-show', () => {
+        this.wpListWindow!.hide();
+        setTimeout(() => {
+              wpWin.show();
+            }, 500);
+      })
+      // wpWin.webContents.on('dom-ready', () => {
+      //   setTimeout(() => {
+      //     this.wpListWindow!.hide();
+      //     wpWin.show();
+      //   }, 500);
+      // })
       wpWin.once('close', (e) => {
         e.preventDefault();
         //this.send();
@@ -99,6 +114,7 @@ export class Workspace implements WorkspaceApi_{
         nodeIntegration: true, // makes it possible to use `require` within our index.html
         enableRemoteModule : true, // remove remove after debugging!
       },
+      show : false
     });
     //wpWin.webContents.openDevTools();
     wpWin.loadFile('./src/app/index.html');
