@@ -136,6 +136,13 @@ const cy = cytoscape({
       css: {
         'background-color' : "#00FFff",
       }
+    },
+    {
+      selector: '.highlight',
+      css: {
+        'background-color' : "#00FFff",
+        'line-color': '#00FFff'
+      }
     }
   ],
   elements: cve,
@@ -643,10 +650,11 @@ function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocument
   const tableHead = document.createElement('thead');
   let row = document.createElement('tr');
 
-  let omitData = _.map(data,(eleDocs)=>{
-    return {name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.pick(doc,["name","fullPath","type"]))}
-  });
-  
+  /*let omitData = _.map(data,(eleDocs)=>{
+    return {id: eleDocs.id, name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.omit(doc,["id"]))}
+  });*/
+  let omitData = data;
+
   for (let docProp in _.first(_.first(omitData)!.documents)!){
     let cell = document.createElement('td');
     cell.appendChild(document.createTextNode(docProp));
@@ -659,6 +667,16 @@ function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocument
   const colCount = _.size(_.first(_.first(data)!.documents)!);
   _.forEach(omitData,(eleDocs)=>{
     let row = document.createElement('tr');
+    connectRowElement(row,eleDocs.id);
+    /*row.addEventListener('click',(e)=>{
+      const ele = cy.getElementById(eleDocs.id);
+      const fitMaxZoom = 1;
+      const maxZoom = cy.maxZoom();
+      cy.maxZoom( fitMaxZoom );
+      cy.fit(ele);
+      cy.maxZoom( maxZoom );
+      ele.flashClass('highlight', 500);
+    });*/
 
     let cell = document.createElement('td');
     cell.appendChild(document.createTextNode(eleDocs.name));
@@ -668,11 +686,30 @@ function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocument
 
     _.forEach(eleDocs.documents,(doc)=>{
       let row = document.createElement('tr');
-      _.forOwn(doc,(docVal)=>{
+      // if (!doc.valid){
+      //   row.classList.add('invalid');
+      // }
+      _.forOwn(_.pick(doc,['name','fullPath','type']),(docVal)=>{
         let cell = document.createElement('td');
         cell.appendChild(document.createTextNode(docVal));
         row.appendChild(cell);
       });
+      connectRowDoc(row,doc);
+      /*row.addEventListener('click',(e)=>{
+        let dialogParams : FileApi<"openFile"> = {
+          method : "openFile", 
+          params : [{doc : doc}]
+        };
+        ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+           if (!_.isEmpty(err)){
+              row.classList.add('invalid');
+           }
+           else {
+              row.classList.remove('invalid');
+           }
+        });
+      });*/
+
       tableBody.appendChild(row);
     });
 
@@ -683,29 +720,57 @@ function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocument
 }
 
 
+function connectRowElement(row : HTMLTableRowElement, eleID : string){
+  row.addEventListener('click',(e)=>{
+    const ele = cy.getElementById(eleID);
+    const fitMaxZoom = 1;
+    const maxZoom = cy.maxZoom();
+    cy.maxZoom( fitMaxZoom );
+    cy.fit(ele);
+    cy.maxZoom( maxZoom );
+    ele.flashClass('highlight', 500);
+  });
+}
+
+function connectRowDoc(row : HTMLTableRowElement, doc :Document){
+  if (!doc.valid){
+    row.classList.add('invalid');
+  }
+  row.addEventListener('click',(e)=>{
+    let dialogParams : FileApi<"openFile"> = {
+      method : "openFile", 
+      params : [{doc : doc}]
+    };
+    ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+       if (!_.isEmpty(err)){
+          row.classList.add('invalid');
+       }
+       else {
+          row.classList.remove('invalid');
+       }
+    });
+  });
+}
+
 
 function findElementsWithDocs(searchValue : string) {
   let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<VertexApiReturn<"findElements">>(QueryChannel.QEURY_CHANNEL, searchParams).then((eles) => {
-    let vIDs: { name: string, ids: string[] }[] = [];
+    let vIDs: {id : string, name : string, childIDs : string[]}[] = [];
     if (!_.isEmpty(eles.vertices)) {
       let nodes = cy.nodes();
       vIDs = _.map(eles.vertices, (v) => {
         const node = nodes.getElementById(v.id);
-        const nChilds = node.union(node.descendants());
+        const nChilds = node.descendants();
         const ids = nChilds.map(function (ele) {
           return ele.id();
         });
-        return { name: v.name, ids: ids };
+        return { id : node.id(), name: v.name, childIDs: ids };
       })
     }
     let eIDs = !_.isEmpty(eles.edges) ? _.map(eles.edges, "id") : [];
     let searchParams: AttributeApi<"findElementsDocuments"> = { method: "findElementsDocuments", params: [{ searchV: vIDs, searchE: eIDs }] };
     ipc.send<AttributeApiReturn<"findElementsDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((eleDocs) => {
-      // _.forEach(eleDocs, (eleDoc) => {
-      //   console.log(eleDoc.name);
-      //   console.log(eleDoc.documents);
-      // })
       if (_.isEmpty(eleDocs)) {
         return;
       }
@@ -719,7 +784,7 @@ function findElementsWithDocs(searchValue : string) {
 
 function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElements">){
   let docsEles = _.map(data,(docEles)=>{
-    const edgesName : ElementName[] = _.map(docEles.edges, (e)=>{return {name : e.name,type : "Edge"}});
+    const edgesData : (ElementName & Element)[] = _.map(docEles.edges, (e)=>{return {id : e.id, name : e.name,type : "Edge"}});
     let nodes = cy.nodes();
     let descNodes = cy.collection();
     _.forEach(docEles.vertices, (v) => {
@@ -727,15 +792,16 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
           descNodes = descNodes.add(n);
     });
     descNodes = descNodes.union(descNodes.ancestors());
-    const nodesName : ElementName[] = descNodes.map((ele) => { return {name : ele.data('name'),type : "Vertex"}});
-    const elesName = _.concat(edgesName,nodesName);
-    return {doc : _.pick(docEles.doc,["name","fullPath","type"]), names : elesName};
+    const nodesData : (ElementName & Element)[] = descNodes.map((ele) => { return {id : ele.id(), name : ele.data('name'),type : "Vertex"}});
+    const elesData = _.concat(edgesData,nodesData);
+    return {doc : docEles.doc,//_.pick(docEles.doc,["name","fullPath","type"]),
+     eles : elesData};
   });
   
   const table = document.createElement('table');
   const tableHead = document.createElement('thead');
   let row = document.createElement('tr');
-  for (let docProp in _.first(docsEles)!.doc){
+  for (let docProp in _.pick(_.first(docsEles)!.doc,["name","fullPath","type"])){
     let cell = document.createElement('td');
     cell.appendChild(document.createTextNode(docProp));
     row.appendChild(cell);
@@ -744,28 +810,31 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
   table.appendChild(tableHead);
   
   const tableBody = document.createElement('tbody');
-  const colCount = _.size(_.first(docsEles)!.doc);
+  const colCount = _.size(_.pick(_.first(docsEles)!.doc,["name","fullPath","type"]));
   _.forEach(docsEles,(docEles)=>{
 
     let row = document.createElement('tr');
-    _.forOwn(docEles.doc,(docVal)=>{
+    _.forOwn(_.pick(docEles.doc,["name","fullPath","type"]),(docVal)=>{
       let cell = document.createElement('td');
       cell.appendChild(document.createTextNode(docVal));
       row.appendChild(cell);
     });
+    connectRowDoc(row,docEles.doc);
     tableBody.appendChild(row);
 
-    _.forEach(docEles.names,(eleName)=>{
+    _.forEach(docEles.eles,(ele)=>{
       let row = document.createElement('tr');
 
       let cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(eleName.name));
+      cell.appendChild(document.createTextNode(ele.name));
       cell.colSpan = colCount-1;
       row.appendChild(cell);
 
       cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(eleName.type));
+      cell.appendChild(document.createTextNode(ele.type));
       row.appendChild(cell);
+
+      connectRowElement(row,ele.id);
 
       tableBody.appendChild(row);
     });

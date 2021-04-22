@@ -17,18 +17,18 @@ thead {
   font-weight: bold;
 }
 
-#docs-table table {
+.docs-eles-table table {
   width: 100%;
   margin-top: 10px;
   margin-bottom: 10px;
   table-layout: fixed;
 }
-#docs-table td {
+.docs-eles-table td {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
-#docs-table td:nth-child(2) {
+.docs-eles-table td:nth-child(2) {
   width: 40%;
 }
 
