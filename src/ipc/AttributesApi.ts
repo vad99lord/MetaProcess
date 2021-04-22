@@ -153,34 +153,58 @@ export class AttributeApi_ {
         //await prisma.$transaction([...cloneE]);
 
         const cloneF = _.map(sourceF,(sF) => {
-            const cFPromise = prisma.file.create({
-                data : {
+            const connVParams = {
+                connect : _.forEach(sF.vertices,(sFV)=>sFV.id = VIDsMap.get(sFV.id)!),
+            }
+            const connEParams = {
+                connect : _.forEach(sF.edges,(sFE)=>sFE.id = EIDsMap.get(sFE.id)!),
+            }
+            const cFPromise = prisma.file.upsert({
+                create : {
                     name : sF.name+suffix,
                     fullPath : sF.fullPath,
                     valid : false,
-                    vertices : {
-                        connect : _.forEach(sF.vertices,(sFV)=>sFV.id = VIDsMap.get(sFV.id)!),
-                    },
-                    edges : {
-                        connect : _.forEach(sF.edges,(sFE)=>sFE.id = EIDsMap.get(sFE.id)!),
+                    vertices : connVParams,
+                    edges : connEParams
+                },
+                update : {
+                    vertices : connVParams,
+                    edges : connEParams
+                },
+                where : {
+                    autoindex_File_1 : {
+                        name : sF.name+suffix,
+                        fullPath : sF.fullPath,
                     }
-                }
+                },
             });
             return cFPromise;
         });
 
         const cloneD = _.map(sourceD,(sD) => {
-            const cDPromise = prisma.directory.create({
-                data : {
+            const connVParams = {
+                connect : _.forEach(sD.vertices,(sDV)=>sDV.id = VIDsMap.get(sDV.id)!),
+            }
+            const connEParams = {
+                connect : _.forEach(sD.edges,(sDE)=>sDE.id = EIDsMap.get(sDE.id)!),
+            }
+            const cDPromise = prisma.directory.upsert({
+                where : {
+                    autoindex_Directory_1 : {
+                        name : sD.name+suffix,
+                        fullPath : sD.fullPath,
+                    }
+                },
+                create : {
                     name : sD.name+suffix,
                     fullPath : sD.fullPath,
                     valid : false,
-                    vertices : {
-                        connect : _.forEach(sD.vertices,(sDV)=>sDV.id = VIDsMap.get(sDV.id)!),
-                    },
-                    edges : {
-                        connect : _.forEach(sD.edges,(sDE)=>sDE.id = EIDsMap.get(sDE.id)!),
-                    }
+                    vertices : connVParams,
+                    edges : connEParams
+                },
+                update : {
+                    vertices : connVParams,
+                    edges : connEParams
                 }
             });
             return cDPromise;
