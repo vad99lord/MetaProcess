@@ -1003,7 +1003,6 @@ document.getElementById('graph-mode')!.addEventListener('click',(e) => {
   console.log("Clicked, new value = " + cb.checked);
 });
 
-/*
-document.getElementById('choose-wp')!.addEventListener('click',(e) => {
-  ipcRenderer.send("Workspace","chooseWP");
-});*/
+document.getElementById('zoom-fit')!.addEventListener('click',() => {
+  cy.fit(undefined,5);
+});
