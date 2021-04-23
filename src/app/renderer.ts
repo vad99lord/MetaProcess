@@ -156,8 +156,8 @@ cy.center();
 cy.on('tap', function(event){
   let evtTarget = event.target;
   if (evtTarget === cy){
-    //document.getElementById('docs-table')!.innerHTML="";
-    //document.getElementById('elem-name')!.innerHTML = "";
+    document.getElementById('docs-table')!.innerHTML="";
+    (<HTMLInputElement>document.getElementById('elem-name'))!.value = "";
     return;
   }
   const ele : cytoscape.SingularData = evtTarget;
@@ -756,6 +756,14 @@ function connectRowDoc(row : HTMLTableRowElement, doc :Document){
 function findElementsWithDocs(searchValue : string) {
   let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<VertexApiReturn<"findElements">>(QueryChannel.QEURY_CHANNEL, searchParams).then((eles) => {
+    const emptySearchTxt = document.getElementById('empty-search')!;
+    if (_.isEmpty(eles.edges)&&_.isEmpty(eles.vertices)) {
+      document.getElementById('search-table')!.innerHTML="";
+      emptySearchTxt.classList.remove('no-display');
+      return;
+    }
+    emptySearchTxt.classList.add('no-display');
+    
     let vIDs: {id : string, name : string, childIDs : string[]}[] = [];
     if (!_.isEmpty(eles.vertices)) {
       let nodes = cy.nodes();
@@ -848,25 +856,13 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
 function findDocumentsWithElements(searchValue : string) {
   let searchParams: AttributeApi<"findDocumentsElements"> = { method: "findDocumentsElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<AttributeApiReturn<"findDocumentsElements">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((docEles) => {
+    const emptySearchTxt = document.getElementById('empty-search')!;
     if (_.isEmpty(docEles)) {
+      document.getElementById('search-table')!.innerHTML="";
+      emptySearchTxt.classList.remove('no-display');
       return;
     }
-    // for (let docEle of docEles) {
-    //   console.log(docEle.doc.name);
-    //   if (!_.isEmpty(docEle.edges)) {
-    //     console.log(_.map(docEle.edges, "name"));
-    //   }
-    //   if (!_.isEmpty(docEle.vertices)) {
-    //     let nodes = cy.nodes();
-    //     let descNodes = cy.collection();
-    //     _.forEach(docEle.vertices, (v) => {
-    //       let n = nodes.getElementById(v.id);
-    //       descNodes = descNodes.add(n);
-    //     });
-    //     descNodes = descNodes.union(descNodes.ancestors());
-    //     console.log(descNodes.map((ele) => { return ele.data('name'); }));
-    //   }
-    // }
+    emptySearchTxt.classList.add('no-display');
     const tableDiv = document.getElementById('search-table')!;
     tableDiv.innerHTML = "";
     tableDiv.appendChild(createDocsElementsTable(docEles));
@@ -891,6 +887,10 @@ document.getElementById('search')!.addEventListener('click',() => {
           findDocumentsWithElements(searchValue);
         };
 })
+
+document.getElementById('search-clear')!.addEventListener('click',() => {
+  (<HTMLInputElement>document.getElementById('search-text'))!.value = "";
+});
 
 function cloneElements(){
   const nodes = cy.nodes(":selected");
