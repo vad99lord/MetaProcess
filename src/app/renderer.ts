@@ -17,6 +17,8 @@ import {ipcRenderer} from 'electron';
 import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
 import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
 import { ClassMethods } from "../ipc/RemoteApi";
+import Bootstrap from "bootstrap";
+import cuid = require("cuid");
 //const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
 
 //TODO: REMOVE! DEBUG for reload after actions
@@ -29,6 +31,11 @@ function reloadWindow(){
 const ipc = new IpcService(ipcRenderer);
 
 const handler = new IpcHandler(ipcRenderer);
+
+var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new Bootstrap.Tooltip(tooltipTriggerEl);
+})
 
 initWorkspace();
 
@@ -67,6 +74,17 @@ document.getElementById('reload')!.addEventListener('click', () => {
 let workSpace : Workspace | null = null;
 let cy : cytoscape.Core;
 
+
+function initModeRadio(isTreeMode : boolean){
+  const radioModes = document.querySelectorAll<HTMLInputElement>('input[name="graph-mode"]');
+  if (isTreeMode){
+   (<HTMLInputElement>document.getElementById("tree-mode")).checked = true;
+  }
+  else {
+    (<HTMLInputElement>document.getElementById("process-mode")).checked = true;
+  }
+}
+
 function initWorkspace(){
     let getParams : WorkspaceApi<"getWorkspace"> = {method : "getWorkspace", params : [{}]}
     ipc.send<WorkspaceApiReturn<"getWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, getParams).then((wp)=>{
@@ -76,7 +94,9 @@ function initWorkspace(){
       (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
       cy = initGraph(workSpace.isTreeMode);
       
-      (<HTMLInputElement>document.getElementById('graph-mode')!).checked = workSpace.isTreeMode;
+      //(<HTMLInputElement>document.getElementById('graph-mode')!).checked = workSpace.isTreeMode;
+      initModeRadio(workSpace.isTreeMode);
+      toggleSearchButtons(true);
       setWorkspaceMode(workSpace);
     })
 }
@@ -645,78 +665,184 @@ document.getElementById('open-dir-dialog')!.addEventListener('click',() => {
 
 
 
-function createElementsDocsTable(data : AttributeApiReturn<"findElementsDocuments">){
-  const table = document.createElement('table');
-  const tableHead = document.createElement('thead');
-  let row = document.createElement('tr');
+function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments">, docElesList : HTMLElement){
+  _.forEach(data,(eleDocs)=>{
+    const collapseID = cuid();
+    const eleLink = document.createElement('a');
+    eleLink.href = "#"+collapseID;
+    eleLink.classList.add("list-group-item","list-group-item-action","collapsed");
+    eleLink.setAttribute("data-bs-toggle", "collapse");
+    
+    const eleRow = document.createElement('div');
+    eleRow.classList.add('row',"align-items-center");
 
-  /*let omitData = _.map(data,(eleDocs)=>{
-    return {id: eleDocs.id, name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.omit(doc,["id"]))}
-  });*/
-  let omitData = data;
+    const colEleIcon = document.createElement('div');
+    colEleIcon.classList.add('col-auto');
+    const eleIconName = eleDocs.type==="Vertex" ? "bookmark" : "diagram-2";
+    const docIcon = createSVGElement(eleIconName);
+    docIcon.classList.add("bi-search");
+    colEleIcon.appendChild(docIcon);
 
-  for (let docProp in _.first(_.first(omitData)!.documents)!){
-    let cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(docProp));
-    row.appendChild(cell);
-  } 
-  tableHead.appendChild(row);
-  table.appendChild(tableHead);
-  
-  const tableBody = document.createElement('tbody');
-  const colCount = _.size(_.first(_.first(data)!.documents)!);
-  _.forEach(omitData,(eleDocs)=>{
-    let row = document.createElement('tr');
-    connectRowElement(row,eleDocs.id);
-    /*row.addEventListener('click',(e)=>{
-      const ele = cy.getElementById(eleDocs.id);
-      const fitMaxZoom = 1;
-      const maxZoom = cy.maxZoom();
-      cy.maxZoom( fitMaxZoom );
-      cy.fit(ele);
-      cy.maxZoom( maxZoom );
-      ele.flashClass('highlight', 500);
-    });*/
+    const colDoc = document.createElement('div');
+    colDoc.classList.add('col','w-25');
+    const flexRow = document.createElement('div');
+    flexRow.classList.add("d-flex","justify-content-between","align-items-center");
+    const eleName = document.createElement('h5');
+    eleName.classList.add("text-truncate","w-75");
+    eleName.innerHTML = eleDocs.name;
 
-    let cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(eleDocs.name));
-    cell.colSpan = colCount;
-    row.appendChild(cell);
-    tableBody.appendChild(row);
+    const iconsCol = document.createElement('div');
+    iconsCol.classList.add("d-flex","flex-column","align-items-end");
+    const elesSpan = document.createElement('span');
+    elesSpan.classList.add("badge","bg-primary","rounded-pill","mb-1");
+    elesSpan.innerHTML = _.toString(eleDocs.documents.length);
+    const expandIcon = createSVGElement("chevron-down");
+    expandIcon.classList.add("bi-search","bi-chevron-down");
 
+    iconsCol.appendChild(elesSpan);
+    iconsCol.appendChild(expandIcon);
+    flexRow.appendChild(eleName);
+    flexRow.appendChild(iconsCol);
+    colDoc.appendChild(flexRow);
+
+    eleRow.appendChild(colEleIcon);
+    eleRow.appendChild(colDoc);
+
+    eleLink.appendChild(eleRow);
+
+    const elesDiv = document.createElement('div');
+    elesDiv.classList.add("collapse");
+    elesDiv.id = collapseID;
+    elesDiv.setAttribute("data-bs-parent","#collapse-parent");
+    const cardDiv = document.createElement('div');
+    cardDiv.classList.add("card","card-body","pt-0");
+
+    const openBtn = document.createElement('button');
+    openBtn.type = "button";
+    openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
+    openBtn.innerHTML = "show element "; //or document
+    connectHtmlElement(openBtn,eleDocs.id);
+    const openIcon = createSVGElement("box-arrow-up-right");
+    openIcon.classList.add("wh-reset");
+    openBtn.appendChild(openIcon);
+    cardDiv.appendChild(openBtn);
+
+    const elesList = document.createElement('ul');
+    elesList.classList.add("list-group","list-group-flush");
     _.forEach(eleDocs.documents,(doc)=>{
-      let row = document.createElement('tr');
-      // if (!doc.valid){
-      //   row.classList.add('invalid');
-      // }
-      _.forOwn(_.pick(doc,['name','fullPath','type']),(docVal)=>{
-        let cell = document.createElement('td');
-        cell.appendChild(document.createTextNode(docVal));
-        row.appendChild(cell);
-      });
-      connectRowDoc(row,doc);
-      /*row.addEventListener('click',(e)=>{
-        let dialogParams : FileApi<"openFile"> = {
-          method : "openFile", 
-          params : [{doc : doc}]
-        };
-        ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
-           if (!_.isEmpty(err)){
-              row.classList.add('invalid');
-           }
-           else {
-              row.classList.remove('invalid');
-           }
-        });
-      });*/
+      const eleItem = document.createElement('li');
+      eleItem.classList.add("list-group-item","d-flex","justify-content-between",
+      "align-items-center","list-group-item-action","cursor-pointer");
+      
+      const namesDiv = document.createElement('div');
+      namesDiv.classList.add("w-25","flex-grow-1");
+      const docName = document.createElement('h6');
+      docName.classList.add("text-truncate","w-75");
+      docName.innerHTML = doc.name;
+      const docPath = document.createElement('p');
+      docPath.classList.add("m-0","text-truncate","w-75");
+      docPath.innerHTML = doc.fullPath;
+      namesDiv.appendChild(docName);
+      namesDiv.appendChild(docPath);
 
-      tableBody.appendChild(row);
-    });
+      const docIconDiv = document.createElement('div');
+      docIconDiv.classList.add("align-self-center");
+      let docIconName;
+      if (doc.valid){
+        docIconName = doc.type==="Directory" ? "folder" : "file-earmark";
+      }
+      else {
+        docIconName = doc.type==="Directory" ? "folder-x" : "file-earmark-x";
+      }
+      const docIcon = createSVGElement(docIconName);
+      docIconDiv.appendChild(docIcon);
 
-  });
-  table.appendChild(tableBody);
+      eleItem.appendChild(namesDiv);
+      eleItem.appendChild(docIconDiv);
+      elesList.appendChild(eleItem);
 
-  return table;
+      connectHtmlDoc(eleItem,doc);
+    }); 
+    cardDiv.appendChild(elesList);
+    elesDiv.appendChild(cardDiv);
+
+    docElesList.appendChild(eleLink);
+    docElesList.appendChild(elesDiv);
+  });  
+  setActiveListItems();
+
+
+
+  // const table = document.createElement('table');
+  // const tableHead = document.createElement('thead');
+  // let row = document.createElement('tr');
+
+  // /*let omitData = _.map(data,(eleDocs)=>{
+  //   return {id: eleDocs.id, name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.omit(doc,["id"]))}
+  // });*/
+  // let omitData = data;
+
+  // for (let docProp in _.first(_.first(omitData)!.documents)!){
+  //   let cell = document.createElement('td');
+  //   cell.appendChild(document.createTextNode(docProp));
+  //   row.appendChild(cell);
+  // } 
+  // tableHead.appendChild(row);
+  // table.appendChild(tableHead);
+  
+  // const tableBody = document.createElement('tbody');
+  // const colCount = _.size(_.first(_.first(data)!.documents)!);
+  // _.forEach(omitData,(eleDocs)=>{
+  //   let row = document.createElement('tr');
+  //   connectRowElement(row,eleDocs.id);
+  //   /*row.addEventListener('click',(e)=>{
+  //     const ele = cy.getElementById(eleDocs.id);
+  //     const fitMaxZoom = 1;
+  //     const maxZoom = cy.maxZoom();
+  //     cy.maxZoom( fitMaxZoom );
+  //     cy.fit(ele);
+  //     cy.maxZoom( maxZoom );
+  //     ele.flashClass('highlight', 500);
+  //   });*/
+
+  //   let cell = document.createElement('td');
+  //   cell.appendChild(document.createTextNode(eleDocs.name));
+  //   cell.colSpan = colCount;
+  //   row.appendChild(cell);
+  //   tableBody.appendChild(row);
+
+  //   _.forEach(eleDocs.documents,(doc)=>{
+  //     let row = document.createElement('tr');
+  //     // if (!doc.valid){
+  //     //   row.classList.add('invalid');
+  //     // }
+  //     _.forOwn(_.pick(doc,['name','fullPath','type']),(docVal)=>{
+  //       let cell = document.createElement('td');
+  //       cell.appendChild(document.createTextNode(docVal));
+  //       row.appendChild(cell);
+  //     });
+  //     connectRowDoc(row,doc);
+  //     /*row.addEventListener('click',(e)=>{
+  //       let dialogParams : FileApi<"openFile"> = {
+  //         method : "openFile", 
+  //         params : [{doc : doc}]
+  //       };
+  //       ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+  //          if (!_.isEmpty(err)){
+  //             row.classList.add('invalid');
+  //          }
+  //          else {
+  //             row.classList.remove('invalid');
+  //          }
+  //       });
+  //     });*/
+
+  //     tableBody.appendChild(row);
+  //   });
+
+  // });
+  // table.appendChild(tableBody);
+  // return table;
 }
 
 
@@ -731,6 +857,19 @@ function connectRowElement(row : HTMLTableRowElement, eleID : string){
     ele.flashClass('highlight', 500);
   });
 }
+
+function connectHtmlElement(elem : HTMLElement, eleID : string){
+  elem.addEventListener('click',(e)=>{
+    const ele = cy.getElementById(eleID);
+    const fitMaxZoom = 1;
+    const maxZoom = cy.maxZoom();
+    cy.maxZoom( fitMaxZoom );
+    cy.fit(ele);
+    cy.maxZoom( maxZoom );
+    ele.flashClass('highlight', 500);
+  });
+}
+
 
 function connectRowDoc(row : HTMLTableRowElement, doc :Document){
   if (!doc.valid){
@@ -752,17 +891,54 @@ function connectRowDoc(row : HTMLTableRowElement, doc :Document){
   });
 }
 
+function connectHtmlDoc(elem : HTMLElement, doc :Document){
+  let errorClass : string;
+  switch(true) {
+    case elem instanceof HTMLButtonElement: {
+      errorClass = "btn-outline-danger";
+      break;
+    }
+    case elem instanceof HTMLLIElement: {
+      errorClass = "list-group-item-danger";
+      break;
+    }
+    default: {
+      errorClass = "invalid";
+      break;
+    }
+  }
+  if (!doc.valid){
+    elem.classList.add(errorClass);
+  }
+  elem.addEventListener('click',(e)=>{
+    let dialogParams : FileApi<"openFile"> = {
+      method : "openFile", 
+      params : [{doc : doc}]
+    };
+    ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+       if (!_.isEmpty(err)){
+          elem.classList.add(errorClass);
+       }
+       else {
+          elem.classList.remove(errorClass);
+       }
+    });
+  });
+}
+
 
 function findElementsWithDocs(searchValue : string) {
   let searchParams: VertexApi<"findElements"> = { method: "findElements", params: [{ searchName: searchValue, wpID : workSpace!.id }] };
   ipc.send<VertexApiReturn<"findElements">>(QueryChannel.QEURY_CHANNEL, searchParams).then((eles) => {
     const emptySearchTxt = document.getElementById('empty-search')!;
     if (_.isEmpty(eles.edges)&&_.isEmpty(eles.vertices)) {
-      document.getElementById('search-table')!.innerHTML="";
+      document.getElementById('collapse-parent')!.innerHTML="";
       emptySearchTxt.classList.remove('no-display');
+      toggleSearchButtons(true);
       return;
     }
     emptySearchTxt.classList.add('no-display');
+    toggleSearchButtons(false);
     
     let vIDs: {id : string, name : string, childIDs : string[]}[] = [];
     if (!_.isEmpty(eles.vertices)) {
@@ -782,15 +958,17 @@ function findElementsWithDocs(searchValue : string) {
       if (_.isEmpty(eleDocs)) {
         return;
       }
-      const tableDiv = document.getElementById('search-table')!;
-      tableDiv.innerHTML = "";
-      tableDiv.appendChild(createElementsDocsTable(eleDocs));
+      // const tableDiv = document.getElementById('search-table')!;
+      // tableDiv.innerHTML = "";
+      const docElesList = document.getElementById("collapse-parent")!;
+      docElesList.innerHTML = "";
+      createElementsDocsList(eleDocs,docElesList);
     });
   });
 }
 
 
-function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElements">){
+function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElements">,docElesList : HTMLElement){
   let docsEles = _.map(data,(docEles)=>{
     const edgesData : (ElementName & Element)[] = _.map(docEles.edges, (e)=>{return {id : e.id, name : e.name,type : "Edge"}});
     let nodes = cy.nodes();
@@ -806,7 +984,105 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
      eles : elesData};
   });
   
-  const table = document.createElement('table');
+  _.forEach(docsEles,(docEles)=>{
+    const collapseID = cuid();
+    const docLink = document.createElement('a');
+    docLink.href = "#"+collapseID;
+    docLink.classList.add("list-group-item","list-group-item-action","collapsed");
+    if (!docEles.doc.valid){
+      docLink.classList.add("list-group-item-danger");
+    }
+
+    const docRow = document.createElement('div');
+    docRow.classList.add('row');
+
+    const colDocIcon = document.createElement('div');
+    colDocIcon.classList.add('col-auto',"d-flex","align-items-center");
+    let docIconName : string;
+    if (docEles.doc.valid){
+      docIconName = docEles.doc.type==="Directory" ? "folder" : "file-earmark";
+    }
+    else {
+      docIconName = docEles.doc.type==="Directory" ? "folder-x" : "file-earmark-x";
+    }
+    //const docIconName = docEles.doc.type==="Directory" ? "folder" : "file-earmark";
+    const docIcon = createSVGElement(docIconName);
+    docIcon.classList.add("bi-search");
+    colDocIcon.appendChild(docIcon);
+
+    const colDoc = document.createElement('div');
+    colDoc.classList.add('col','w-25');
+
+    const rowName = document.createElement('div');
+    rowName.classList.add("d-flex","justify-content-between","align-items-start");
+    const docName = document.createElement('h5');
+    docName.classList.add("mb-1","text-truncate","w-75");
+    docName.innerHTML = docEles.doc.name;
+    const elesSpan = document.createElement('span');
+    elesSpan.classList.add("badge","bg-primary","rounded-pill");
+    elesSpan.innerHTML = _.toString(docEles.eles.length);
+    rowName.appendChild(docName);
+    rowName.appendChild(elesSpan);
+
+    const rowPath = <HTMLDivElement>rowName.cloneNode(false);
+    const docPath = document.createElement('p');
+    docPath.classList.add("mb-1","text-truncate","w-75");
+    docPath.innerHTML = docEles.doc.fullPath;
+    const expandIcon = createSVGElement("chevron-down");
+    expandIcon.classList.add("bi-search","bi-chevron-down");
+    rowPath.appendChild(docPath);
+    rowPath.appendChild(expandIcon);
+
+    colDoc.appendChild(rowName);
+    colDoc.appendChild(rowPath);
+
+    docRow.appendChild(colDocIcon);
+    docRow.appendChild(colDoc);
+
+    docLink.appendChild(docRow);
+    docLink.setAttribute("data-bs-toggle", "collapse");
+
+    const elesDiv = document.createElement('div');
+    elesDiv.classList.add("collapse");
+    elesDiv.id = collapseID;
+    const cardDiv = document.createElement('div');
+    cardDiv.classList.add("card","card-body","pt-0");
+
+    const openBtn = document.createElement('button');
+    openBtn.type = "button";
+    openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
+    openBtn.innerHTML = "show element "; //or document
+    connectHtmlDoc(openBtn,docEles.doc);
+    const openIcon = createSVGElement("box-arrow-up-right");
+    openIcon.classList.add("wh-reset");
+    openBtn.appendChild(openIcon);
+    cardDiv.appendChild(openBtn);
+
+    const elesList = document.createElement('ul');
+    elesList.classList.add("list-group","list-group-flush");
+    _.forEach(docEles.eles,(ele)=>{
+      const eleItem = document.createElement('li');
+      eleItem.classList.add("list-group-item","d-flex","justify-content-between",
+      "align-items-center","list-group-item-action","cursor-pointer");
+      eleItem.innerHTML=ele.name;
+      const eleIconName = ele.type==="Vertex" ? "bookmark" : "diagram-2";
+      const eleIcon = createSVGElement(eleIconName);
+      expandIcon.classList.add("bi-search");
+      connectHtmlElement(eleItem,ele.id);
+      eleItem.appendChild(eleIcon);
+
+      elesList.appendChild(eleItem);
+    }); 
+    cardDiv.appendChild(elesList);
+    elesDiv.appendChild(cardDiv);
+    elesDiv.setAttribute("data-bs-parent","#collapse-parent");
+
+    docElesList.appendChild(docLink);
+    docElesList.appendChild(elesDiv);
+  });  
+  setActiveListItems();
+
+  /*const table = document.createElement('table');
   const tableHead = document.createElement('thead');
   let row = document.createElement('tr');
   for (let docProp in _.pick(_.first(docsEles)!.doc,["name","fullPath","type"])){
@@ -849,7 +1125,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
   });
   table.appendChild(tableBody);
 
-  return table;
+  return table;*/
 }
 
 
@@ -858,14 +1134,18 @@ function findDocumentsWithElements(searchValue : string) {
   ipc.send<AttributeApiReturn<"findDocumentsElements">>(AttributeChannel.ATTRIBUTE_CHANNEL, searchParams).then((docEles) => {
     const emptySearchTxt = document.getElementById('empty-search')!;
     if (_.isEmpty(docEles)) {
-      document.getElementById('search-table')!.innerHTML="";
+      document.getElementById('collapse-parent')!.innerHTML="";
       emptySearchTxt.classList.remove('no-display');
+      toggleSearchButtons(true);
       return;
     }
     emptySearchTxt.classList.add('no-display');
+    toggleSearchButtons(false);
     const tableDiv = document.getElementById('search-table')!;
     tableDiv.innerHTML = "";
-    tableDiv.appendChild(createDocsElementsTable(docEles));
+    const docElesList = document.getElementById("collapse-parent")!;
+    docElesList.innerHTML = "";
+    createDocsElementsTable(docEles,docElesList);
   });
 }
 
@@ -879,9 +1159,9 @@ document.getElementById('search')!.addEventListener('click',() => {
         //TODO case-insentive search for ciryllic!!!
         //searchValue = _.toLower(searchValue);  
 
-        const searchDocs = (<HTMLInputElement>document.getElementById("search-type"))!;
-        if (!searchDocs.checked) {
-          findElementsWithDocs(searchValue)
+        const searchDocs = (<HTMLSelectElement>document.getElementById("search-type"))!;
+        if (_.isEqual(searchDocs.value,"eles")) {
+          findElementsWithDocs(searchValue);
         }
         else {
           findDocumentsWithElements(searchValue);
@@ -891,6 +1171,17 @@ document.getElementById('search')!.addEventListener('click',() => {
 document.getElementById('search-clear')!.addEventListener('click',() => {
   (<HTMLInputElement>document.getElementById('search-text'))!.value = "";
 });
+document.getElementById('clear-results')!.addEventListener('click',(e) => {
+  document.getElementById('collapse-parent')!.innerHTML = "";
+  toggleSearchButtons(true);
+});
+
+function toggleSearchButtons(disable : boolean){
+  document.querySelectorAll<HTMLButtonElement>("#results-btns button").forEach((btn) => {
+    btn.disabled = disable;
+  });
+}
+
 
 function cloneElements(){
   const nodes = cy.nodes(":selected");
@@ -977,22 +1268,24 @@ function setWorkspaceMode(wp : Workspace){
 }
 
 function setTreeMode(){
-  const cloneBtn = document.getElementById('clone elements')!;
-  cloneBtn.style.visibility = 'hidden';
-  cloneBtn.style.display = 'none';
+  const cloneBtn = <HTMLButtonElement>document.getElementById('clone elements')!;
+  // cloneBtn.style.visibility = 'hidden';
+  // cloneBtn.style.display = 'none';
+  cloneBtn.disabled = true;
   workSpace!.isTreeMode = true;
   setTreeEdges(cy.edges());
 }
 
 function setProcessMode(){
-  const cloneBtn = document.getElementById('clone elements')!;
-  cloneBtn.style.visibility = 'visible';
-  cloneBtn.style.display = 'inline-block';
+  const cloneBtn = <HTMLButtonElement>document.getElementById('clone elements')!;
+  // cloneBtn.style.visibility = 'visible';
+  // cloneBtn.style.display = 'inline-block';
+  cloneBtn.disabled = false;
   workSpace!.isTreeMode = false;
   setProcessEdges(cy.edges());
 }
 
-document.getElementById('graph-mode')!.addEventListener('click',(e) => {
+/*document.getElementById('graph-mode')!.addEventListener('click',(e) => {
   const cb = <HTMLInputElement> e.target;
   if (cb.checked){
     setTreeMode();
@@ -1001,8 +1294,84 @@ document.getElementById('graph-mode')!.addEventListener('click',(e) => {
     setProcessMode();
   }
   console.log("Clicked, new value = " + cb.checked);
+});*/
+
+document.querySelectorAll('input[name="graph-mode"]').forEach((elem) => {
+  elem.addEventListener("change", function(event) {
+    const newMode = (<HTMLInputElement>event.target).value;
+    if (newMode==="tree"){
+      setTreeMode();
+    }
+    else{
+      setProcessMode();
+    }
+  });
 });
 
 document.getElementById('zoom-fit')!.addEventListener('click',() => {
   cy.fit(undefined,5);
 });
+
+
+
+function setActiveListItems(){
+  document.querySelectorAll('.list-group a').forEach((elem) => {
+    elem.addEventListener('click', (e) => {
+      document.querySelectorAll('.list-group a').forEach((el) => {
+        el.classList.remove('active');
+        if (!el.classList.contains('collapsed'))
+          elem.classList.add('active');
+      });
+    })
+  });
+}
+
+document.getElementById('collapse')!.addEventListener('click', () => {
+  document.querySelectorAll('.list-group .collapse').forEach((el) => {
+    el.classList.remove('show');
+  });
+  document.querySelectorAll('.list-group a').forEach((el) => {
+    el.classList.remove('active');
+    el.classList.add('collapsed');
+  });
+});
+document.getElementById('expand')!.addEventListener('click', () => {
+  document.querySelectorAll('.list-group .collapse').forEach((el) => {
+    el.classList.add('show');
+  });
+  document.querySelectorAll('.list-group a').forEach((el) => {
+    el.classList.remove('collapsed');
+    el.classList.add('active');
+  });
+});
+
+
+
+function createSVGElement(svgName : string){
+  const svgIconsPath = "../../node_modules/bootstrap-icons/bootstrap-icons.svg";
+  const svgFullPath = svgIconsPath + "#" + svgName;
+  const svgElem = document.createElementNS("http://www.w3.org/2000/svg",'svg');
+  svgElem.classList.add('bi');
+  svgElem.setAttribute('width',"1em");
+  svgElem.setAttribute('height',"1em");
+  svgElem.setAttribute('fill',"currentColor");
+const useElem = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  useElem.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', svgFullPath);
+  svgElem.appendChild(useElem);
+  return svgElem;
+}
+
+// document.getElementById('tester')!.addEventListener('click',() => {
+//     const colR = document.getElementById('right')!;
+//     const colL = document.getElementById('left')!;
+//     if (colR.classList.contains("d-none")){
+//       colR.classList.remove('d-none');
+//       cy.resize();
+//       cy.fit(undefined,5);
+//     }
+//     else {
+//       colR.classList.add('d-none');
+//       cy.resize();
+//       cy.fit(undefined,5);
+//     }
+// });

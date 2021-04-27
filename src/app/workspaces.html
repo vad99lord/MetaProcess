@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <!-- <link href="../../node_modules/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" /> -->
     <link href="wp-style.css" rel="stylesheet" />
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="
@@ -14,7 +16,12 @@
     <div class="main">
         <h1>Choose workspace:</h1>
         <div id="wp-table"></div>
-        <input type="button" id="add-workspace" value="add workspace"> 
+        <button type="button" id="add-workspace" class="btn btn-outline-primary">
+            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#plus-circle"/>
+            </svg>
+            Add new
+        </button>
     </div>
 </body>
 <script>

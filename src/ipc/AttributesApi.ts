@@ -1,6 +1,6 @@
 import { PrismaClient, Prisma, Directory, Edge, Vertex, PrismaPromise} from '@prisma/client'
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
-import { Element,ElementType } from './FilesApi';
+import { Element,ElementName,ElementType } from './FilesApi';
 import cuid from 'cuid';
 import * as _ from "lodash";
 import { identity } from 'lodash';
@@ -18,9 +18,7 @@ export type AttributeApiReturn<T extends keyof AttributeApi_> = Prisma.PromiseRe
 const prisma = new PrismaClient();
 
 
-export type ElementDocuments = Prisma.VertexGetPayload<{
-    select: { name: true, id : true}
-  }> & {documents : Document[]}
+export type ElementDocuments = Element & ElementName & {documents : Document[]}
 export type DocumentElements = {doc : Document, edges : Edge[], vertices : Vertex[]}
 export type Document = Directory & DocumentType
 export type DocumentType = {type : Extract<Prisma.ModelName,"Directory"|"File">}
@@ -247,7 +245,7 @@ export class AttributeApi_ {
                         const doc : Document = _.assign(file,{type : "File"} as DocumentType);
                         return doc;
                     }));
-                    const elemDocs : ElementDocuments = {id : params.searchV[index].id, name : params.searchV[index].name, documents: docs}
+                    const elemDocs : ElementDocuments = {type : "Vertex", id : params.searchV[index].id, name : params.searchV[index].name, documents: docs}
                     return elemDocs;
                 });
             }
@@ -270,7 +268,7 @@ export class AttributeApi_ {
                     docs = _.concat(docs,_.map(eDoc.files,(file)=> {
                         return _.assign(file,{type : "File"} as DocumentType);
                     }));
-                    const elemDocs : ElementDocuments = {id : eDoc.id, name : eDoc.name, documents: docs}
+                    const elemDocs : ElementDocuments = {type : "Edge", id : eDoc.id, name : eDoc.name, documents: docs}
                     return elemDocs;
                 }));
             }
@@ -369,7 +367,7 @@ export class AttributeApi_ {
             return _.assign(file,{type : "File"} as DocumentType);
         }));
         
-        const elemDocs : ElementDocuments = {id : params.id, name : eleDocs!.name, documents: docs}
+        const elemDocs : ElementDocuments = {type : params.ele, id : params.id, name : eleDocs!.name, documents: docs}
         return  elemDocs;
     }
 

@@ -4,19 +4,29 @@
   "main": "dist/src/app/main.js",
   "devDependencies": {
     "@types/lodash": "^4.14.168",
+    "concurrently": "^6.0.2",
     "electron-reloader": "^1.2.0",
+    "gulp-svg-sprite": "^1.5.0",
     "prisma": "2.17.0",
     "ts-node": "9.1.1",
     "typescript": "4.1.5"
   },
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && electron ."
+    "start": "npm run build && electron .",
+    "start-reload": "npm start reload",
+    "watch": "tsc -w",
+    "dev": "concurrently 'npm:start-reload' 'npm:watch' ",
+    "update-sprite": "svg-sprite --svg-namespace-classnames false -s --symbol-dest icons --symbol-sprite custom-icons.svg icons/individual/*.svg"
   },
   "dependencies": {
+    "@popperjs/core": "^2.9.2",
     "@prisma/client": "2.17.0",
+    "@types/bootstrap": "^5.0.12",
     "@types/cytoscape": "^3.14.12",
     "@types/node": "13.13.45",
+    "bootstrap": "^5.0.0-beta3",
+    "bootstrap-icons": "^1.4.1",
     "cuid": "^2.1.8",
     "cytoscape": "^3.18.1",
     "electron": "^11.3.0",

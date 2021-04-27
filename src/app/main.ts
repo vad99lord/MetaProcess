@@ -15,10 +15,11 @@ import { WorkspaceWinApi,WorkspaceApi_ } from '../ipc/WorkspaceApi';
 import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
 
 //auto reload view from source changes, dev only
-/*try {
-  require('electron-reloader')(module)
-} catch (_) {}*/
-
+if (_.isEqual(_.last(process.argv),"reload")){
+    try {
+      require('electron-reloader')(module)
+    } catch (_) {}
+}
 
 const openedWP = new Map<number,string>();
 
@@ -119,6 +120,7 @@ export class Workspace implements WorkspaceApi_{
     });
     //wpWin.webContents.openDevTools();
     wpWin.loadFile('./src/app/index.html');
+    wpWin.maximize();
     return wpWin;
   }
 

@@ -21,12 +21,30 @@ ipcRenderer.on(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
     getWorkspaces();
   });
 
+function createSVGElement(svgName : string){
+    const svgIconsPath = "../../node_modules/bootstrap-icons/bootstrap-icons.svg";
+    const svgFullPath = svgIconsPath + "#" + svgName;
+    const svgElem = document.createElementNS("http://www.w3.org/2000/svg",'svg');
+    svgElem.classList.add('bi');
+    svgElem.setAttribute('width',"1em");
+    svgElem.setAttribute('height',"1em");
+    svgElem.setAttribute('fill',"currentColor");
+	const useElem = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    useElem.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', svgFullPath);
+    svgElem.appendChild(useElem);
+    return svgElem;
+}
+
+
 function createTable(data: AttributeApiReturn<"getWorkspaces">) {
     const table = document.createElement('table');
+    table.classList.add('table','table-hover');
     const tableHead = document.createElement('thead');
+    tableHead.classList.add('thead-light');
     let row = document.createElement('tr');
-    for (let wpProp in _.omit(_.first(data)!, ["id","isTreeMode"])) {
-        let cell = document.createElement('td');
+    for (let wpProp in _.assign(_.omit(_.first(data)!, ["id","isTreeMode"]),{"action" : {}})) {
+        let cell = document.createElement('th');
+        cell.scope = "col";
         cell.appendChild(document.createTextNode(wpProp));
         row.appendChild(cell);
     }
@@ -44,20 +62,48 @@ function createTable(data: AttributeApiReturn<"getWorkspaces">) {
 
 function createRow(tableBody: HTMLTableSectionElement, wp: Workspace) {
     let row = document.createElement('tr');
-    //row.id = wp.id;
+    //row.classList.add("cursor-pointer");
     let cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(wp.name));
+    //cell.scope = "row";
+    const wpNameLink = document.createElement('a');
+    wpNameLink.classList.add('link-primary','text-decoration-none','cursor-pointer');
+    wpNameLink.innerHTML = wp.name; 
+    wpNameLink.addEventListener('click', (e) => {
+        //send wp to main window for opening
+        let openParams : WorkspaceApi<"createWorkspace"> = {method : "createWorkspace", params : [{wpID : wp.id}]}
+        ipc.send<WorkspaceApiReturn<"createWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, openParams);      
+    });
+    cell.appendChild(wpNameLink);
     row.appendChild(cell);
 
     cell = document.createElement('td');
     cell.appendChild(document.createTextNode(wp.createdAt.toDateString()));
     row.appendChild(cell);
 
-    row.addEventListener('click', (e) => {
+    cell = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.classList.add('btn','btn-outline-danger','shadow-none');
+    const delSVG = createSVGElement('trash');
+    delBtn.appendChild(delSVG);
+    delBtn.addEventListener('click',(e)=>{
+        let delParams: AttributeApi<"deleteWorkspace"> = {
+            method: "deleteWorkspace",
+            params: [{ wpID: wp.id }]
+        };
+        ipc.send<AttributeApiReturn<"deleteWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, delParams).then((wp) => {
+            console.log(wp);
+            tableBody.removeChild(row);
+        });
+    })
+    cell.appendChild(delBtn);
+    row.appendChild(cell);
+
+    /*row.addEventListener('click', (e) => {
         //send wp to main window for opening
         let openParams : WorkspaceApi<"createWorkspace"> = {method : "createWorkspace", params : [{wpID : wp.id}]}
         ipc.send<WorkspaceApiReturn<"createWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, openParams);      
-    });
+    });*/
+    /*
     row.addEventListener('contextmenu', (e) => {
         let delParams: AttributeApi<"deleteWorkspace"> = {
             method: "deleteWorkspace",
@@ -67,7 +113,7 @@ function createRow(tableBody: HTMLTableSectionElement, wp: Workspace) {
             console.log(wp);
             tableBody.removeChild(row);
         });
-    });
+    });*/
     tableBody.appendChild(row);
 }
 
