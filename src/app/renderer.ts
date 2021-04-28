@@ -34,7 +34,9 @@ const handler = new IpcHandler(ipcRenderer);
 
 var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new Bootstrap.Tooltip(tooltipTriggerEl);
+  return new Bootstrap.Tooltip(tooltipTriggerEl,{
+    container: 'body'
+  });
 })
 
 initWorkspace();
@@ -188,11 +190,12 @@ cy.on('tap', function(event){
     params : [{ele: eleType,id : ele.id()}
   ]};
   ipc.send<AttributeApiReturn<"getElementDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, attrParams).then((ele) => {
-    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;
-    
+    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;    
     const tableDiv = document.getElementById('docs-table')!;
     tableDiv.innerHTML = "";
-    tableDiv.appendChild(createTable(ele));
+    if (!_.isEmpty(ele.documents)){
+      tableDiv.appendChild(createTable(ele));
+    }
   });
 
 });
@@ -475,25 +478,88 @@ document.getElementById('update-elem-name')!.addEventListener('click',() => {
   }
 })
 
+function createTable(data : AttributeApiReturn<"getElementDocuments">){
+  const table = document.createElement('table');
+  table.classList.add("table","table-hover","table-bordered","text-center");
+  const tableHead = document.createElement('thead');
+  let row = document.createElement('tr');
+  row.classList.add("d-flex","flex-wrap");
+  //const colSizes = {name : 'col-4',fullPath : 'col-4',type : 'col-2',action : 'col-2'};
+  const docPropCols = _.zip(_.keys(_.assign(_.pick(data.documents[0],"name","fullPath","type"),{action:{}})),['col-4','col-4','col-2','col-2']);
+  for (let docPropCol of docPropCols){
+    let cell = document.createElement('th');
+    cell.classList.add(docPropCol[1]!);
+    cell.scope="col";
+    cell.appendChild(document.createTextNode(docPropCol[0]!));
+    row.appendChild(cell);
+  } 
+  tableHead.appendChild(row);
+  table.appendChild(tableHead);
 
+  
+  const tableBody = document.createElement('tbody');
+  data.documents.forEach((doc) => createRow(tableBody,doc));
+  table.appendChild(tableBody);
+  return table;
+}
 
 function createRow(tableBody: HTMLTableSectionElement, doc : Document){
   let row = document.createElement('tr');
+  row.classList.add("d-flex","flex-wrap");
   if (!doc.valid){
-    row.classList.add('invalid');
+    row.classList.add('table-danger','text-danger');
   }
-    row.id = "docs-table_"+doc.id;
-    for (let docProp of _.values(_.pick(doc,"name","fullPath","type"))){
-      let cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(docProp));
-      row.appendChild(cell);
-    } 
-    row.addEventListener('click',(e)=>{
-        /*let name = row.firstChild!.textContent;
-        let path = row.firstChild!.nextSibling!.textContent;
-        let fullPath = path!+"/"+name!;
-        //console.log(fullPath);
-        */
+    //row.id = "docs-table_"+doc.id;
+
+    const docNameCell = document.createElement('th');
+    docNameCell.classList.add('col-4');
+    const docNameLink = document.createElement('a');
+    docNameLink.classList.add("link-primary","text-decoration-none","cursor-pointer");
+    const docName = document.createElement('p');
+    docName.classList.add('text-truncate');
+    docName.innerHTML = doc.name;
+    docNameLink.appendChild(docName);
+    docNameCell.appendChild(docNameLink);
+
+    const docPathCell = document.createElement('td');
+    docPathCell.classList.add('col-4');
+    const docPath = document.createElement('p');
+    docPath.classList.add('text-truncate');
+    docPath.innerHTML = doc.fullPath;
+    docPath.setAttribute('data-bs-toggle',"tooltip");
+    docPath.setAttribute('data-bs-placement',"right");
+    docPath.title = doc.fullPath;
+    const pathTooltip = new Bootstrap.Tooltip(docPath,{container : 'body'});
+    docPathCell.appendChild(docPath);
+
+    const docIconCell = document.createElement('td');
+    docIconCell.classList.add('col-2');
+    let docIconName : string;
+    if (doc.valid){
+      docIconName = doc.type==="Directory" ? "folder" : "file-earmark";
+    }
+    else {
+      docIconName = doc.type==="Directory" ? "folder-x" : "file-earmark-x";
+    }
+    const docIcon = createSVGElement(docIconName);
+    docIconCell.appendChild(docIcon);
+
+    const delCell = document.createElement('td');
+    delCell.classList.add('col-2');
+    const delBtn = document.createElement('button');
+    delBtn.classList.add('btn','btn-outline-danger','shadow-none');
+    const delIconName = doc.type==="Directory" ? "folder-minus" : "file-earmark-minus";
+    const delSVG = createSVGElement(delIconName);
+    delSVG.classList.add('wh-reset');
+    delBtn.appendChild(delSVG);
+    delCell.appendChild(delBtn);
+
+    row.appendChild(docNameCell);
+    row.appendChild(docPathCell);
+    row.appendChild(docIconCell);
+    row.appendChild(delCell);
+
+    docNameLink.addEventListener('click',(e)=>{
         if (!doc.valid){
             let dialogParams : FileApi<"openFileDialog"> = {
               method : "openFileDialog", 
@@ -511,7 +577,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
               };
               ipc.send<FileApiReturn<"updateDoc">>(FileChannel.FILE_CHANNEL, updateParams).then((updDoc) =>{
                   if (!_.isNil(updDoc)){
-                    row.classList.remove('invalid');
+                    row.classList.remove('table-danger',"text-danger");
                   }
                   else {
                       let eles = cy.elements(":selected");
@@ -556,15 +622,16 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
         };
         ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
            if (!_.isEmpty(err)){
-              row.classList.add('invalid');
+              row.classList.add('table-danger',"text-danger");
            }
            else {
-              row.classList.remove('invalid');
+              row.classList.remove('table-danger',"text-danger");
            }
         });
       }
     });
-    row.addEventListener('contextmenu',(e)=>{
+
+    delBtn.addEventListener('click',(e)=>{
       let eles = cy.elements(":selected");
       if (eles.empty() || eles.size() > 1){
           alert("select one element to untag document!");
@@ -574,8 +641,10 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
          id: eles.first().id(),
          type: eles.first().isNode() ? "Vertex" : "Edge"
       }
-      const docID : number = Number(_.last(_.split(row.id,"_"))!);
-      const docType = row.lastChild!.textContent! as DocumentType['type'];
+      //const docID : number = Number(_.last(_.split(row.id,"_"))!);
+      //const docType = row.lastChild!.textContent! as DocumentType['type'];
+      const docID = doc.id;
+      const docType = doc.type;
       let disconnParams : FileApi<"disconnectDocument"> = {
         method : "disconnectDocument", 
         params : [{ele : ele,docType : docType,docID : docID}]
@@ -587,27 +656,6 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
     });
     tableBody.appendChild(row);
 }
-
-
-function createTable(data : AttributeApiReturn<"getElementDocuments">){
-  const table = document.createElement('table');
-  const tableHead = document.createElement('thead');
-  let row = document.createElement('tr');
-  for (let docProp in _.pick(data.documents[0],"name","fullPath","type")){
-    let cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(docProp));
-    row.appendChild(cell);
-  } 
-  tableHead.appendChild(row);
-  table.appendChild(tableHead);
-
-  
-  const tableBody = document.createElement('tbody');
-  data.documents.forEach((doc) => createRow(tableBody,doc));
-  table.appendChild(tableBody);
-  return table;
-}
-
 
 function openDialog(itemType : "openFile"|"openDirectory"){
   let dialogParams : FileApi<"openFileDialog"> = {
@@ -770,93 +818,8 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
     docElesList.appendChild(elesDiv);
   });  
   setActiveListItems();
-
-
-
-  // const table = document.createElement('table');
-  // const tableHead = document.createElement('thead');
-  // let row = document.createElement('tr');
-
-  // /*let omitData = _.map(data,(eleDocs)=>{
-  //   return {id: eleDocs.id, name : eleDocs.name, documents : _.map(eleDocs.documents,(doc)=>_.omit(doc,["id"]))}
-  // });*/
-  // let omitData = data;
-
-  // for (let docProp in _.first(_.first(omitData)!.documents)!){
-  //   let cell = document.createElement('td');
-  //   cell.appendChild(document.createTextNode(docProp));
-  //   row.appendChild(cell);
-  // } 
-  // tableHead.appendChild(row);
-  // table.appendChild(tableHead);
-  
-  // const tableBody = document.createElement('tbody');
-  // const colCount = _.size(_.first(_.first(data)!.documents)!);
-  // _.forEach(omitData,(eleDocs)=>{
-  //   let row = document.createElement('tr');
-  //   connectRowElement(row,eleDocs.id);
-  //   /*row.addEventListener('click',(e)=>{
-  //     const ele = cy.getElementById(eleDocs.id);
-  //     const fitMaxZoom = 1;
-  //     const maxZoom = cy.maxZoom();
-  //     cy.maxZoom( fitMaxZoom );
-  //     cy.fit(ele);
-  //     cy.maxZoom( maxZoom );
-  //     ele.flashClass('highlight', 500);
-  //   });*/
-
-  //   let cell = document.createElement('td');
-  //   cell.appendChild(document.createTextNode(eleDocs.name));
-  //   cell.colSpan = colCount;
-  //   row.appendChild(cell);
-  //   tableBody.appendChild(row);
-
-  //   _.forEach(eleDocs.documents,(doc)=>{
-  //     let row = document.createElement('tr');
-  //     // if (!doc.valid){
-  //     //   row.classList.add('invalid');
-  //     // }
-  //     _.forOwn(_.pick(doc,['name','fullPath','type']),(docVal)=>{
-  //       let cell = document.createElement('td');
-  //       cell.appendChild(document.createTextNode(docVal));
-  //       row.appendChild(cell);
-  //     });
-  //     connectRowDoc(row,doc);
-  //     /*row.addEventListener('click',(e)=>{
-  //       let dialogParams : FileApi<"openFile"> = {
-  //         method : "openFile", 
-  //         params : [{doc : doc}]
-  //       };
-  //       ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
-  //          if (!_.isEmpty(err)){
-  //             row.classList.add('invalid');
-  //          }
-  //          else {
-  //             row.classList.remove('invalid');
-  //          }
-  //       });
-  //     });*/
-
-  //     tableBody.appendChild(row);
-  //   });
-
-  // });
-  // table.appendChild(tableBody);
-  // return table;
 }
 
-
-function connectRowElement(row : HTMLTableRowElement, eleID : string){
-  row.addEventListener('click',(e)=>{
-    const ele = cy.getElementById(eleID);
-    const fitMaxZoom = 1;
-    const maxZoom = cy.maxZoom();
-    cy.maxZoom( fitMaxZoom );
-    cy.fit(ele);
-    cy.maxZoom( maxZoom );
-    ele.flashClass('highlight', 500);
-  });
-}
 
 function connectHtmlElement(elem : HTMLElement, eleID : string){
   elem.addEventListener('click',(e)=>{
@@ -870,26 +833,6 @@ function connectHtmlElement(elem : HTMLElement, eleID : string){
   });
 }
 
-
-function connectRowDoc(row : HTMLTableRowElement, doc :Document){
-  if (!doc.valid){
-    row.classList.add('invalid');
-  }
-  row.addEventListener('click',(e)=>{
-    let dialogParams : FileApi<"openFile"> = {
-      method : "openFile", 
-      params : [{doc : doc}]
-    };
-    ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
-       if (!_.isEmpty(err)){
-          row.classList.add('invalid');
-       }
-       else {
-          row.classList.remove('invalid');
-       }
-    });
-  });
-}
 
 function connectHtmlDoc(elem : HTMLElement, doc :Document){
   let errorClass : string;
@@ -933,11 +876,11 @@ function findElementsWithDocs(searchValue : string) {
     const emptySearchTxt = document.getElementById('empty-search')!;
     if (_.isEmpty(eles.edges)&&_.isEmpty(eles.vertices)) {
       document.getElementById('collapse-parent')!.innerHTML="";
-      emptySearchTxt.classList.remove('no-display');
+      emptySearchTxt.classList.remove('d-none');
       toggleSearchButtons(true);
       return;
     }
-    emptySearchTxt.classList.add('no-display');
+    emptySearchTxt.classList.add('d-none');
     toggleSearchButtons(false);
     
     let vIDs: {id : string, name : string, childIDs : string[]}[] = [];
@@ -1081,51 +1024,6 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
     docElesList.appendChild(elesDiv);
   });  
   setActiveListItems();
-
-  /*const table = document.createElement('table');
-  const tableHead = document.createElement('thead');
-  let row = document.createElement('tr');
-  for (let docProp in _.pick(_.first(docsEles)!.doc,["name","fullPath","type"])){
-    let cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(docProp));
-    row.appendChild(cell);
-  } 
-  tableHead.appendChild(row);
-  table.appendChild(tableHead);
-  
-  const tableBody = document.createElement('tbody');
-  const colCount = _.size(_.pick(_.first(docsEles)!.doc,["name","fullPath","type"]));
-  _.forEach(docsEles,(docEles)=>{
-
-    let row = document.createElement('tr');
-    _.forOwn(_.pick(docEles.doc,["name","fullPath","type"]),(docVal)=>{
-      let cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(docVal));
-      row.appendChild(cell);
-    });
-    connectRowDoc(row,docEles.doc);
-    tableBody.appendChild(row);
-
-    _.forEach(docEles.eles,(ele)=>{
-      let row = document.createElement('tr');
-
-      let cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(ele.name));
-      cell.colSpan = colCount-1;
-      row.appendChild(cell);
-
-      cell = document.createElement('td');
-      cell.appendChild(document.createTextNode(ele.type));
-      row.appendChild(cell);
-
-      connectRowElement(row,ele.id);
-
-      tableBody.appendChild(row);
-    });
-  });
-  table.appendChild(tableBody);
-
-  return table;*/
 }
 
 
@@ -1135,11 +1033,11 @@ function findDocumentsWithElements(searchValue : string) {
     const emptySearchTxt = document.getElementById('empty-search')!;
     if (_.isEmpty(docEles)) {
       document.getElementById('collapse-parent')!.innerHTML="";
-      emptySearchTxt.classList.remove('no-display');
+      emptySearchTxt.classList.remove('d-none');
       toggleSearchButtons(true);
       return;
     }
-    emptySearchTxt.classList.add('no-display');
+    emptySearchTxt.classList.add('d-none');
     toggleSearchButtons(false);
     const tableDiv = document.getElementById('search-table')!;
     tableDiv.innerHTML = "";
@@ -1151,13 +1049,13 @@ function findDocumentsWithElements(searchValue : string) {
 
 
 document.getElementById('search')!.addEventListener('click',() => {
-        let searchValue = (<HTMLInputElement>document.getElementById('search-text'))!.value;
-        if (searchValue === "") {
-          alert("empty query!");
+        const searchInput = (<HTMLInputElement>document.getElementById('search-text'))!
+        let searchValue = searchInput.value;
+        if (_.isEmpty(searchValue)) {
+          searchInput.classList.add('is-invalid');
           return;
         }
-        //TODO case-insentive search for ciryllic!!!
-        //searchValue = _.toLower(searchValue);  
+        searchInput.classList.remove('is-invalid');  
 
         const searchDocs = (<HTMLSelectElement>document.getElementById("search-type"))!;
         if (_.isEqual(searchDocs.value,"eles")) {
@@ -1284,17 +1182,6 @@ function setProcessMode(){
   workSpace!.isTreeMode = false;
   setProcessEdges(cy.edges());
 }
-
-/*document.getElementById('graph-mode')!.addEventListener('click',(e) => {
-  const cb = <HTMLInputElement> e.target;
-  if (cb.checked){
-    setTreeMode();
-  }
-  else{
-    setProcessMode();
-  }
-  console.log("Clicked, new value = " + cb.checked);
-});*/
 
 document.querySelectorAll('input[name="graph-mode"]').forEach((elem) => {
   elem.addEventListener("change", function(event) {

@@ -17,7 +17,8 @@
     "start-reload": "npm start reload",
     "watch": "tsc -w",
     "dev": "concurrently 'npm:start-reload' 'npm:watch' ",
-    "update-sprite": "svg-sprite --svg-namespace-classnames false -s --symbol-dest icons --symbol-sprite custom-icons.svg icons/individual/*.svg"
+    "update-sprite": "svg-sprite --svg-namespace-classnames false -s --symbol-dest icons --symbol-sprite custom-icons.svg icons/individual/*.svg",
+    "build-css": "node-sass src/app/scss -o src/app/css"
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",
@@ -30,7 +31,8 @@
     "cuid": "^2.1.8",
     "cytoscape": "^3.18.1",
     "electron": "^11.3.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "node-sass": "^5.0.0"
   },
   "engines": {
     "node": ">=10.0.0"

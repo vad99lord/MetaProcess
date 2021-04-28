@@ -104,9 +104,9 @@ ul {
   border-bottom: 1px solid black;
   font-size : large */
 }
-.no-display {
+/* .no-display {
   display: none;
-}
+} */
 
 .cursor-pointer {
   cursor: pointer;

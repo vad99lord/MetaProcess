@@ -2,8 +2,10 @@
 <html>
 
 <head>
-    <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
-    <link href="style.css" rel="stylesheet" />
+    <!-- <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" /> -->
+    <link href="./css/custom.css" rel="stylesheet" />
+    <link href="./css/style.css" rel="stylesheet" />
+    <link href="./css/scrollbar.css" rel="stylesheet" />
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="
     ">
@@ -14,83 +16,87 @@
 
 <body>
     <div class="main container-fluid vh-100 mh-100 d-flex flex-column overflow-hidden">
-    <div class="header row border-bottom">
+    <div class="header row border-bottom border-top">
         <div class="col-10">
-            <div class="input-group mb-3 w-25 p-2">
-                <input type="text" class="form-control fw-bold border-3" id="wp-name">
+            <div class="row border-bottom">
+                <div class="input-group mb-3 w-25 p-2">
+                    <input type="text" class="form-control fw-bold border-3" id="wp-name">
+                </div>
             </div>
             <!-- <div class="btn btn-primary" id="tester">column</div> -->
             <!-- <input type="text" id="wp-name"> -->
-            <div class="row text-center pb-3">
-                <div class="col">
-                    <h4>Edges</h4>
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-primary" id="add edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add edge">
-                        <svg class="bi" width="1em" height="1em" fill="currentColor">
-                            <use xlink:href="../../icons/custom-icons.svg#edge-plus"/>
-                        </svg>
-                      </button>
-                      <button type="button" class="btn btn-primary" id="add src edges" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add source edges">
-                        <svg class="bi" width="1em" height="1em" fill="currentColor">
-                            <use xlink:href="../../icons/custom-icons.svg#edge-many"/>
-                        </svg>
+            <div class="row">
+                <div class="row text-center pb-3">
+                    <div class="col">
+                        <h4>Edges</h4>
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary" id="add edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add edge">
+                            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../icons/custom-icons.svg#edge-plus"/>
+                            </svg>
                         </button>
-                      <button type="button" class="btn btn-primary" id="delete edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete edge">
-                        <svg class="bi" width="1em" height="1em" fill="currentColor">
-                            <use xlink:href="../../icons/custom-icons.svg#edge-minus"/>
-                        </svg>
-                        </button>
+                        <button type="button" class="btn btn-primary" id="add src edges" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add source edges">
+                            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../icons/custom-icons.svg#edge-many"/>
+                            </svg>
+                            </button>
+                        <button type="button" class="btn btn-primary" id="delete edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete edge">
+                            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../icons/custom-icons.svg#edge-minus"/>
+                            </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    <h4>Vertices</h4>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-primary" id="add vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add vertex">
-                            <svg class="bi " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark-plus"/>
-                            </svg>
-                        </button>
-                        <button type="button" class="btn btn-primary" id="union parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="union to parent">
-                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#bookmarks-union"/>
-                            </svg>
-                        </button>
-                        <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="include into parent">
-                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmarks"/>
-                            </svg>
-                        </button>
-                        <button type="button" class="btn btn-primary"  id="delete vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete vertex">
-                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark-dash"/>
-                            </svg>
-                        </button>
-                        <button type="button" class="btn btn-primary" id="remove parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="remove parent">
-                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#bookmarks-dotted"/>
-                            </svg>
-                        </button>
-                        <button type="button" class="btn btn-primary" id="clone elements" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="clone elements">
-                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#bookmarks-copy"/>
-                            </svg>
-                        </button>
+                    <div class="col">
+                        <h4>Vertices</h4>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary" id="add vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add vertex">
+                                <svg class="bi " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark-plus"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="union parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="union to parent">
+                                <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-union"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="include into parent">
+                                <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmarks"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-primary"  id="delete vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete vertex">
+                                <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark-dash"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="remove parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="remove parent">
+                                <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-dotted"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="clone elements" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="clone elements">
+                                <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-copy"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    <h4>Utils</h4>
-                    <div class="btn-group">
-                    <button type="button" class="btn btn-primary" id="zoom-fit" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="default zoom">
-                        <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                            <use xlink:href="../../icons/custom-icons.svg#zoom-init"/>
-                        </svg>
-                   </button>
-                    <button type="button" class="btn btn-primary" id="reload">reload</button>
+                    <div class="col">
+                        <h4>Utils</h4>
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary" id="zoom-fit" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="default zoom">
+                            <svg class="bi  " width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../icons/custom-icons.svg#zoom-init"/>
+                            </svg>
+                    </button>
+                        <button type="button" class="btn btn-primary" id="reload">reload</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col d-flex flex-column justify-content-center align-items-center">
+        <div class="col d-flex flex-column justify-content-center align-items-center border-start">
             <h4>Mode</h4>
             <div class="btn-group">
                 <input type="radio" class="btn-check" name="graph-mode" id="tree-mode" value="tree" autocomplete="off">
@@ -115,7 +121,7 @@
         <div class="col-8 flex-grow-1 left mh-100 border-end py-2" id="left">
             <div id="cy"></div>
         </div>
-        <div class="col-4 right mh-100 overflow-auto" id="right">
+        <div class="col-4 right mh-100 overflow-auto custom-scroll" id="right">
             <div class="input-group my-3">
                 <input type="text" id="search-text" class="form-control w-25" placeholder="Search">
                 <label class="input-group-text" for="search-type">Mode</label>
@@ -133,15 +139,10 @@
                         <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#search"/>
                     </svg>
                 </button>
+                <div class="invalid-feedback">
+                    empty query
+                </div>
             </div>
-            <!--<div class="search-group">
-            <input type="text" id="search-text" placeholder="Search">
-                <input type="checkbox" id="search-type" name="documents"
-                       checked>
-                <label for="documents">Docs</label>
-            <input type="button" id="search" value="Search">
-            <input type="button" id="search-clear" value="Clear">--> 
-            <p id="empty-search" class="no-display">no results found</p>
             <div id="search-table"></div>
 
             <div class="btn-toolbar mb-1" id="results-btns">
@@ -166,197 +167,64 @@
                 </div>
             </div>
 
+            <div id="empty-search" class="d-none alert alert-info">no results found</div>
             <div class="list-group w-100" id="collapse-parent"></div>
 
-
-            <h4>samples</h4>
-            <div class="list-group w-100" id="collapse-parent1">
-                <a data-bs-toggle="collapse" href="#collapseExample" class="list-group-item list-group-item-danger list-group-item-action collapsed">
-                    <div class="row">
-                        <div class="col-auto d-flex align-items-center">
-                            <svg class="bi bi-search" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#folder"/>
+            <div class="row">
+                <div class="col-md-12 col-lg-8">
+                    <div class="input-group my-3">
+                        <input type="text" id="elem-name" class="form-control">
+                        <button class="btn btn-outline-success" id="update-elem-name" type="button">
+                            <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrow-return-left" />
                             </svg>
-                        </div>
-                        <div class="col w-25">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <h5 class="mb-1 text-truncate w-75">tesdddddddddddt.txt</h5>
-                                <span class="badge bg-primary rounded-pill">14</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-start">
-                                <p class="mb-1 text-truncate w-75">C:\Users\Documents\testFiles\sfsdfsdfsfdssdf\sdfsdfsdddddddddddddddfsdf\sdfsdfsdfs</p>
-                                <svg class="bi bi-search" width="1.25em" height="1.25em" fill="currentColor">
-                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#chevron-down"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            
-                <div class="collapse" id="collapseExample" data-bs-parent="#collapse-parent1">
-                    <div class="card card-body pt-0">
-                        
-                        
-                    <button type="button" class="btn btn-sm my-3  align-self-start">
-                        Open document
-                        <svg class="bi wh-reset" fill="currentColor">
-                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#box-arrow-up-right"/>
-                        </svg>
-                    </button>
-                        <ul class="list-group list-group-flush ">
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action cursor-pointer ">
-                                <p class="m-0 me-2 text-truncate w-75 flex-grow-1">A list item</p>
-                                <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark"/>
-                                </svg>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action cursor-pointer ">
-                                A second list item
-                                <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark"/>
-                                </svg>
-                            </li>
-                        </ul>
+                        </button>
                     </div>
                 </div>
-            
-                <a data-bs-toggle="collapse" href="#collapseExample2" class="list-group-item list-group-item-action collapsed">
-                    <div class="d-flex w-100 justify-content-between align-items-start">
-                        <h5 class="mb-1">test.txt</h5>
-                        <span class="badge bg-primary rounded-pill">14</span>
-                    </div>
-                    <div class="d-flex w-100 justify-content-between align-items-start ">
-                        <p class="mb-1">C:\Users\Documents\testFiles</p>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor"
-                            class="bi bi-chevron-down" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd"
-                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                        </svg>
-                    </div>
-                </a>
-            
-                <div class="collapse" id="collapseExample2" data-bs-parent="#collapse-parent1">
-                    <div class="card card-body">
-                        <ul class="list-group list-group-flush ">
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
-                                <p>A list item</p>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    class="bi bi-bookmark" viewBox="0 0 16 16">
-                                    <path
-                                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-                                </svg>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
-                                A second list item
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    class="bi bi-bookmark" viewBox="0 0 16 16">
-                                    <path
-                                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-                                </svg>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            
             </div>
-
-
-
-            <div class="list-group w-100 " id="collapse-parent2">
-                <a data-bs-toggle="collapse" href="#collapseEx" class="list-group-item list-group-item-action collapsed">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <svg class="bi bi-search" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmark"/>
+            <div class="table-responsive custom-scroll" id="docs-table"></div> 
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary" id="open-file-dialog">
+                    <svg class="bi bi-search wh-reset" fill="currentColor">
+                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file-earmark-plus" />
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="open-dir-dialog">
+                    <svg class="bi bi-search wh-reset" fill="currentColor">
+                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#folder-plus" />
+                    </svg>
+                </button>
+            </div>
+            <div class="table-responsive custom-scroll">
+            <table class="table table-hover table-bordered text-center">
+                <thead>
+                  <tr class="d-flex flex-wrap">
+                    <th scope="col" class="col-4">name</th>
+                    <th scope="col" class="col-4">path</th>
+                    <th scope="col" class="col-2">type</th>
+                    <th scope="col" class="col-2">action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="d-flex flex-wrap">
+                    <th class="col-4"><a class="link-primary text-decoration-none cursor-pointer"><p class="text-truncate">testesesrers.txddddddddddddt</p></a></th>
+                    <td class="col-4"><p class="text-truncate">c/sdfsdf/sdfssdfs/sdfs/dsfdddddddddddddddsd/</p></td>
+                    <td class="col-2">
+                        <svg class="bi" width="1em" height="1em" fill="currentColor">
+                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file-earmark" />
+                        </svg>
+                    </td>
+                    <td class="col-2">
+                        <button class="btn btn-outline-danger" type="button">
+                            <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file-minus" />
                             </svg>
-                        </div>
-                        <div class="col w-25">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="text-truncate w-75">Element name</h5>
-                                <div class="d-flex flex-column align-items-end">
-                                    <span class="badge bg-primary rounded-pill mb-1">14</span>
-                                    <svg class="bi bi-search" width="1.25em" height="1.25em" fill="currentColor">
-                                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#chevron-down"/>
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            
-                <div class="collapse" id="collapseEx" data-bs-parent="#collapse-parent2">
-                    <div class="card card-body">
-                        <ul class="list-group list-group-flush ">
-                            <li class="d-flex justify-content-between list-group-item list-group-item-action cursor-pointer ">
-                                <!-- <div class="d-flex"> -->
-                                    <div class="w-25 flex-grow-1">
-                                            <h6 class="text-truncate w-75">tedddddddddddddddddst.txt</h6>
-                                            <p class="m-0 text-truncate w-75">C:\Users\Documents\tedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddstFiles</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#folder"/>
-                                        </svg>
-                                    </div>
-                                <!-- </div> -->
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action cursor-pointer ">
-                                A second list item
-                                <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file"/>
-                                </svg>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            
-                <a data-bs-toggle="collapse" href="#collapseEx2" class="list-group-item list-group-item-action collapsed">
-                    <div class="d-flex w-100 justify-content-between align-items-start">
-                        <h5 class="mb-1">test.txt</h5>
-                        <span class="badge bg-primary rounded-pill">14</span>
-                    </div>
-                    <div class="d-flex w-100 justify-content-between align-items-start ">
-                        <p class="mb-1">C:\Users\Documents\testFiles</p>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor"
-                            class="bi bi-chevron-down" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd"
-                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                        </svg>
-                    </div>
-                </a>
-            
-                <div class="collapse" id="collapseEx2" data-bs-parent="#collapse-parent2">
-                    <div class="card card-body">
-                        <ul class="list-group list-group-flush ">
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
-                                A list item
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    class="bi bi-bookmark" viewBox="0 0 16 16">
-                                    <path
-                                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-                                </svg>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
-                                A second list item
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    class="bi bi-bookmark" viewBox="0 0 16 16">
-                                    <path
-                                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-                                </svg>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            
+                        </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-
-
-            <!--</div>-->
-            <input type="text" id="elem-name">
-            <input type="button" id="update-elem-name" value="update name"> 
-            <div id="docs-table" class="docs-eles-table"></div>
-            <input type="button" id="open-file-dialog" value="add file"> 
-            <input type="button" id="open-dir-dialog" value="add directory"> 
         </div>
     </div>
 </div>
