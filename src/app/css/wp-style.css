@@ -13,12 +13,16 @@ table {
     margin: 30px auto;
 } */
 
-.main {
+/* .main {
   margin: 0 auto;
   width: max-content;
   /* background-color: crimson; */
   /* height: 100vh; */
-}
+/* }
+
+.fit-content{
+  flex-basis: fit-content;
+} */
 
 .cursor-pointer {
   cursor: pointer;
