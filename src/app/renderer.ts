@@ -11,14 +11,15 @@ import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
 import { IpcHandler } from "../ipc/IpcHandler";
 import { CloseChannel } from "../ipc/CloseChannel";
-import { clone } from "lodash";
+import { clone, isNil } from "lodash";
 import { Workspace } from ".prisma/client";
 import {ipcRenderer} from 'electron';
 import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
 import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
 import { ClassMethods } from "../ipc/RemoteApi";
-import Bootstrap from "bootstrap";
+import Bootstrap, { Tooltip } from "bootstrap";
 import cuid = require("cuid");
+import { F_OK } from "constants";
 //const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
 
 //TODO: REMOVE! DEBUG for reload after actions
@@ -75,6 +76,31 @@ document.getElementById('reload')!.addEventListener('click', () => {
 
 let workSpace : Workspace | null = null;
 let cy : cytoscape.Core;
+const tapHandler = function(event : cytoscape.EventObject){
+  let evtTarget = event.target;
+  if (evtTarget === cy){
+    disableDocsTable(true);
+    toggleRightPane(false);
+    return;
+  }
+  disableDocsTable(false);
+  toggleRightPane(true);
+  const ele : cytoscape.SingularData = evtTarget;
+
+  let eleType : "Edge"|"Vertex" = ele.isNode() ? "Vertex" : "Edge";
+  let attrParams : AttributeApi<"getElementDocuments"> = {
+    method : "getElementDocuments", 
+    params : [{ele: eleType,id : ele.id()}
+  ]};
+  ipc.send<AttributeApiReturn<"getElementDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, attrParams).then((ele) => {
+    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;    
+    const tableDiv = document.getElementById('docs-table')!;
+    tableDiv.innerHTML = "";
+    if (!_.isEmpty(ele.documents)){
+      tableDiv.appendChild(createTable(ele));
+    }
+  });
+};
 
 
 function initModeRadio(isTreeMode : boolean){
@@ -99,6 +125,9 @@ function initWorkspace(){
       //(<HTMLInputElement>document.getElementById('graph-mode')!).checked = workSpace.isTreeMode;
       initModeRadio(workSpace.isTreeMode);
       toggleSearchButtons(true);
+      toggleHelpBtns(false);
+      //TODO: toggle all elements smoother
+      //toggleRightPane(false);
       setWorkspaceMode(workSpace);
     })
 }
@@ -114,6 +143,9 @@ let cve = Promise.all([ce,cv]).then(([ce,cv]) => {
   ce = _.map(ce,e=>_.assign(e, {classes: isTreeMode ? "tree-edges" : "process-edges"}));
   return [...ce, ...cv]
 });
+const successColor = getComputedStyle(document.documentElement).getPropertyValue("--bs-success");
+const dangerColor = getComputedStyle(document.documentElement).getPropertyValue("--bs-danger");
+const infoColor = getComputedStyle(document.documentElement).getPropertyValue("--bs-info");
 const cy = cytoscape({
   container: document.getElementById('cy'),
   boxSelectionEnabled: false,
@@ -162,8 +194,22 @@ const cy = cytoscape({
     {
       selector: '.highlight',
       css: {
-        'background-color' : "#00FFff",
-        'line-color': '#00FFff'
+        'background-color' : infoColor,
+        'line-color': infoColor
+      }
+    },
+    {
+      selector: '.highlight-success',
+      css: {
+        'background-color' : successColor,
+        'line-color': successColor
+      }
+    },
+    {
+      selector: '.highlight-danger',
+      css: {
+        'background-color' : dangerColor,
+        'line-color': dangerColor
       }
     }
   ],
@@ -175,31 +221,36 @@ const cy = cytoscape({
 });
 //center graph in window
 cy.center();
-cy.on('tap', function(event){
-  let evtTarget = event.target;
-  if (evtTarget === cy){
-    document.getElementById('docs-table')!.innerHTML="";
-    (<HTMLInputElement>document.getElementById('elem-name'))!.value = "";
-    return;
-  }
-  const ele : cytoscape.SingularData = evtTarget;
-
-  let eleType : "Edge"|"Vertex" = ele.isNode() ? "Vertex" : "Edge";
-  let attrParams : AttributeApi<"getElementDocuments"> = {
-    method : "getElementDocuments", 
-    params : [{ele: eleType,id : ele.id()}
-  ]};
-  ipc.send<AttributeApiReturn<"getElementDocuments">>(AttributeChannel.ATTRIBUTE_CHANNEL, attrParams).then((ele) => {
-    (<HTMLInputElement>document.getElementById('elem-name'))!.value = ele.name;    
-    const tableDiv = document.getElementById('docs-table')!;
-    tableDiv.innerHTML = "";
-    if (!_.isEmpty(ele.documents)){
-      tableDiv.appendChild(createTable(ele));
-    }
-  });
-
-});
+cy.on('tap', tapHandler);
 return cy;
+}
+
+
+document.getElementById('search-open')!.addEventListener('click',(ev) => {
+  toggleRightPane(true);
+});
+
+function disableDocsTable(disable : boolean){
+  document.getElementById('docs-table')!.innerHTML="";
+  const elemInput = (<HTMLInputElement>document.getElementById('elem-name'))!;
+  elemInput.value = "";
+  elemInput.disabled = disable;
+  (<HTMLInputElement>document.getElementById('update-elem-name'))!.disabled = disable;
+  document.querySelectorAll<HTMLButtonElement>("#docs-ele-btns button").forEach((btn) => {
+    btn.disabled = disable;
+  });
+}
+
+function toggleRightPane(show : boolean){
+  const colR = document.getElementById('right-pane')!;
+  if (show){
+    colR.classList.remove('d-none');
+    fitZoom();
+  }
+  else{
+    colR.classList.add('d-none');
+    fitZoom();
+  }
 }
 
 document.getElementById('wp-name')!.addEventListener('input',(ev) => {
@@ -211,7 +262,13 @@ function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingula
   // console.log(source.id());
   // console.log(target.id());
   if (!source.edgesTo(target).empty()) {
-    alert('edge is already presented');
+    alert("edge is already presented");
+    disableFuncMode();
+    return;
+  }
+  if (source.same(target)) {
+    alert("can't make self loops");
+    disableFuncMode();
     return;
   }
   let edgeParams : VertexApi<"createEdge"> = {method : "createEdge", params : 
@@ -222,11 +279,141 @@ function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingula
       { group: 'edges', data: { id: edge.id, source: edge.startID, target: edge.endID, name : edge.name}}
     ]);
     setEdgeStyle(cyEdge.edges(),workSpace!);
+    cyEdge.edges().flashClass("highlight-success",500);
+    disableFuncMode();
   });
+}
+
+function toggleFunctionMode(enable : boolean){
+  if (enable){
+    toggleHelpBtns(true);
+    cy.removeListener('tap', tapHandler);
+  }
+  else{
+    toggleHelpBtns(false);
+    cy.on('tap', tapHandler);
+  }
+}
+
+// document.addEventListener("keydown", function(event) {
+//   const key = event.key;
+//   if (key === "Enter") {
+//       console.log("esc");
+//   }
+// });
+
+
+const funcCB = new Map<HTMLElement,((e: MouseEvent) => void)>();
+const funcKeyCB = new Set<((e: KeyboardEvent) => void)>();
+let funcBtn : HTMLButtonElement | null = null;
+const successBtn : HTMLButtonElement = (() => {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.classList.add("btn","btn-success");
+  const successSVG = createSVGElement("check2");
+  successSVG.classList.value = "";
+  btn.appendChild(successSVG);
+  return btn;
+})();
+function enableFuncMode(closeCb : ()=>void,
+                        successCB?: ()=>void,
+                        funcBtnID ?: string){
+  toggleFunctionMode(true);
+  const closeBtn = document.getElementById("close-btn")!;
+  addFuncListener(closeBtn,closeCb,"Escape");
+  if (!_.isNil(successCB)){
+    addFuncListener(successBtn,successCB,"Enter");
+  }
+  if (!_.isNil(funcBtnID)){
+    setFuncBtn(funcBtnID);
+  }
+}
+function setFuncBtn(funcBtnID : string){
+  funcBtn = <HTMLButtonElement>document.getElementById(funcBtnID)!;
+  // console.log(funcBtn);
+  funcBtn.replaceWith(successBtn);
+}
+
+function disableFuncMode(){
+  toggleFunctionMode(false);
+  removeFuncListeners();
+  if (!_.isNull(funcBtn)){
+    successBtn.replaceWith(funcBtn);
+  }
+  funcBtn = null;
+}
+
+function toggleCloseButton(show : boolean){
+  const closeBtn = document.getElementById('close-btn')!;
+  if (show){
+    closeBtn.classList.remove('d-none');
+  }
+  else{
+    closeBtn.classList.add('d-none');
+  }
+}
+
+function addFuncListener(elem : HTMLElement, cb : ()=>void, keyBind ?: string){
+  //const btn = elem;
+  const clickListener = () => {
+    cb();
+    disableFuncMode();
+  }
+  elem.addEventListener('click',clickListener);
+  funcCB.set(elem,clickListener);
+  if(_.isNil(keyBind)){
+    return;
+  }
+  const keyListener = (e: KeyboardEvent) => {
+    const key = e.key;
+    if (key === keyBind) {
+      if (!_.isNull(elem.parentNode)){
+        clickListener();
+        // console.log(keyBind);
+      }
+    }
+  }
+  document.addEventListener("keydown", keyListener);
+  funcKeyCB.add(keyListener);
+}
+
+function removeFuncListeners(){
+  funcCB.forEach((cb,elem)=>{
+    // const btn = document.getElementById(elemID)!;
+    elem.removeEventListener('click',cb);
+  });
+  funcCB.clear();
+  funcKeyCB.forEach((cb)=>{
+    document.removeEventListener("keydown",cb);
+  });
+  funcKeyCB.clear();
+};
+
+
+function toggleHelpAlert(show : boolean){
+  const helpAlert = document.getElementById('help-alert')!;
+  if (show){
+    helpAlert.classList.remove('d-none');
+  }
+  else{
+    helpAlert.classList.add('d-none');
+  }
+} 
+
+function toggleHelpBtns(show : boolean){
+  toggleCloseButton(show);
+  toggleHelpAlert(show);
+}
+
+function showHelpText(helpText : string){
+  const helpAlert = document.getElementById('help-alert')!;
+  // toggleHelpAlert(true);
+  helpAlert.innerHTML = helpText;
 }
 
 //const nodesConst : cytoscape.NodeSingular[] = [];
 function onAddEdge(){
+  showHelpText("Select first node:");
   let nodes : cytoscape.NodeSingular[] = []
   let addEdgeCallback = function(evt : cytoscape.EventObject){
     nodes.push(evt.target);
@@ -235,27 +422,51 @@ function onAddEdge(){
       nodes = []
       cy.removeListener('select','node',addEdgeCallback);
     }
+    else{
+      showHelpText("Select second node:");
+    }
   }
   return addEdgeCallback;
 }
 
 document.getElementById('add edge')!.addEventListener('click',() => {
-  cy.addListener('select','node', onAddEdge());
+  const edgeCb = onAddEdge();
+  enableFuncMode(()=>{
+    cy.removeListener('select','node',edgeCb);
+  });
+  cy.elements(":selected").unselect();
+  cy.addListener('select','node', edgeCb);
 });
 
-let mainV: cytoscape.EdgeSingular[] = [];
+let mainV: cytoscape.NodeSingular[] = [];
 function addSrcEdges(){
   if (_.isEmpty(mainV)){
     cy.one('select','node', (evt) => {
       mainV.push(evt.target);
-    });
+      showHelpText("Select dest nodes:");
+      cy.one('select','node', (evt) => {
+        setFuncBtn("add src edges");
+      });
+    }); 
   }
   else {
     const src = _.first(mainV)!;
     let dests = cy.nodes(":selected").subtract(src);
     if (dests.empty()){
+      mainV = [];
+      // disableFuncMode();
       return;
     }
+    if (!src.edgesTo(dests).empty()) {
+      alert("edge is already presented");
+      mainV = [];
+      return;
+    }
+    // if (dests.contains(src)) {
+    //   alert("can't make self loops");
+    //   mainV = [];
+    //   return;
+    // }
 
     let srcID = src.id();
     const destIDs = dests.map(function( ele ){
@@ -280,7 +491,9 @@ function addSrcEdges(){
       });
       const cyEdges = cy.add(cytoEdges);
       setEdgeStyle(cyEdges.edges(),workSpace!);
-      mainV = [];  
+      cyEdges.flashClass("highlight-success",500);
+      mainV = [];
+      // disableFuncMode();  
     });
 
     /*nodes.move({parent: _.first(mainParent)!.id()});
@@ -288,19 +501,19 @@ function addSrcEdges(){
   }
 }
 document.getElementById('add src edges')!.addEventListener('click',() => {
+  enableFuncMode(()=>{
+    mainV = [];
+    cy.removeListener('select');
+    cy.selectionType("single");
+  },()=>{
+    addSrcEdges();
+    cy.selectionType("single");
+  });
+  cy.elements(":selected").unselect();
+  showHelpText("Select source node:");
+  cy.selectionType("additive");
   addSrcEdges();
 });
-
-function makeid(length: number) {
-   var result           = '';
-   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-   var charactersLength = characters.length;
-   for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-   }
-   return result;
-};
-
 
 function addVertex(){
   let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "testVertex",wpID : workSpace!.id}]};
@@ -308,9 +521,10 @@ function addVertex(){
     //make sure added vertex is centered in visible model part
     const ex = cy.extent()
     const modelCenter = {x : ex.x1+ex.w/2,y : ex.y1+ex.h/2}
-    cy.add([
+    const v = cy.add([
       { group: 'nodes', data: { id: vertex.id, name : vertex.name}, position : modelCenter}
     ]);
+    v.nodes().flashClass("highlight-success",500);
   });
 }
 document.getElementById('add vertex')!.addEventListener('click',() => {
@@ -339,14 +553,29 @@ function unionParent(){
     method : "unionParent", 
     params : [{unionName : "testUnionVertex",childrenID : childrenID, unionParentID : unionParentID, wpID : workSpace!.id}]};
   ipc.send<VertexApiReturn<"unionParent">>(QueryChannel.QEURY_CHANNEL, unionParams).then((unionParent) => {
-    cy.add([
+    const parent = cy.add([
       { group: 'nodes', data: { id: unionParent.id, name : unionParent.name, parent : unionParentID}}
     ]);
     nodes.move({parent: unionParent.id});
+    parent.flashClass('highlight-sucess', 500);
   });
 }
 document.getElementById('union parent')!.addEventListener('click',() => {
-	unionParent()
+  const selectListener = (evt : cytoscape.EventObject) => {
+    setFuncBtn("union parent");
+  };
+  enableFuncMode(()=>{
+    cy.removeListener('select','node',selectListener);
+    cy.selectionType("single");
+  },()=>{
+    unionParent();
+    cy.selectionType("single");
+  });
+  cy.elements(":selected").unselect();
+  cy.one('select','node',selectListener); 
+  showHelpText("Select nodes:");
+  cy.selectionType("additive");
+	//unionParent();
 });
 
 
@@ -355,6 +584,10 @@ function includeParent(){
   if (_.isEmpty(mainParent)){
     cy.one('select','node', (evt) => {
       mainParent.push(evt.target);
+      showHelpText("Select child nodes:");
+      cy.one('select','node', (evt) => {
+        setFuncBtn("include parent");
+      });
     });
   }
   else {
@@ -362,6 +595,8 @@ function includeParent(){
     //substract parent from selected set in case it's been selected
     let nodes = cy.nodes(":selected").subtract(parent);
     if (nodes.empty()){
+      mainParent = [];
+      // disableFuncMode();
       return;
     }
 
@@ -373,9 +608,11 @@ function includeParent(){
     let includeParams : VertexApi<"includeParent"> = {
       method : "includeParent", 
       params : [{parentID : parentID,childrenID : childrenID, wpID : workSpace!.id}]};
-    ipc.send<VertexApiReturn<"includeParent">>(QueryChannel.QEURY_CHANNEL, includeParams).then((parent) => {
-        nodes.move({parent: parent.id});
-        mainParent = [];  
+    ipc.send<VertexApiReturn<"includeParent">>(QueryChannel.QEURY_CHANNEL, includeParams).then((inclParent) => {
+        nodes.move({parent: inclParent.id});
+        mainParent = [];
+        parent.flashClass('highlight-success', 500);
+        // disableFuncMode();  
     });
 
     /*nodes.move({parent: _.first(mainParent)!.id()});
@@ -383,6 +620,18 @@ function includeParent(){
   }
 }
 document.getElementById('include parent')!.addEventListener('click',() => {
+  // includeParent();
+  enableFuncMode(()=>{
+    mainParent = [];
+    cy.removeListener('select');
+    cy.selectionType("single");
+  },()=>{
+    includeParent();
+    cy.selectionType("single");
+  });
+  cy.elements(":selected").unselect();
+  showHelpText("Select parent node:");
+  cy.selectionType("additive");
   includeParent();
 });
 
@@ -392,7 +641,7 @@ function removeVertex(){
   //explicitly add all descendant nodes to remove set
   //as deleting parent's vertex imply deleting all of its contents
   let nodesChilds = nodes.descendants().union(nodes);
-  nodesChilds.flashClass('highlight', 1000);
+  nodesChilds.flashClass('highlight-danger', 1000);
   const childrenID = nodesChilds.map(function( ele ){
     return ele.id();
   });
@@ -401,11 +650,22 @@ function removeVertex(){
     params : [{verticesID : childrenID}
   ]};
   ipc.send<VertexApiReturn<"deleteVertex">>(QueryChannel.QEURY_CHANNEL, removeParams).then((v) => {
-      nodes.remove();  
+      nodes.remove(); 
   });
 }
 document.getElementById('delete vertex')!.addEventListener('click',() => {
-  removeVertex();
+  // removeVertex();
+  const selectListener = (evt : cytoscape.EventObject) => {
+    setFuncBtn("delete vertex");
+  };
+  enableFuncMode(()=>{cy.removeListener('select','node',selectListener);
+                       cy.selectionType("single");},
+                 ()=>{removeVertex();
+                       cy.selectionType("single");});
+  cy.elements(":selected").unselect();
+  cy.one('select','node',selectListener); 
+  showHelpText("Select nodes:");
+  cy.selectionType("additive");
 });
 
 
@@ -414,16 +674,28 @@ function removeEdge(){
   const childrenID = edges.map(function( ele ){
     return ele.id();
   });
+  edges.flashClass('highlight-danger', 500);
   let removeParams : VertexApi<"deleteEdge"> = {
     method : "deleteEdge", 
     params : [{edgesID : childrenID}
   ]};
-  ipc.send<VertexApiReturn<"deleteVertex">>(QueryChannel.QEURY_CHANNEL, removeParams).then((e) => {
+  ipc.send<VertexApiReturn<"deleteEdge">>(QueryChannel.QEURY_CHANNEL, removeParams).then((e) => {
       edges.remove(); 
   });
 }
 document.getElementById('delete edge')!.addEventListener('click',() => {
-  removeEdge();
+  const selectListener = (evt : cytoscape.EventObject) => {
+    setFuncBtn("delete edge");
+  };
+  enableFuncMode(()=>{cy.removeListener('select','edge',selectListener);
+                       cy.selectionType("single");},
+                 ()=>{removeEdge();
+                       cy.selectionType("single");});
+  cy.elements(":selected").unselect();
+  cy.one('select','edge',selectListener); 
+  showHelpText("Select edges:");
+  cy.selectionType("additive");
+  // removeEdge();
 });
 
 
@@ -432,6 +704,7 @@ function removeParent(){
   const parentsID = parents.map(function( ele ){
     return ele.id();
   });
+  parents.flashClass('highlight-danger', 500);
   let removeParams : VertexApi<"deleteVertex"> = {
     method : "deleteVertex", 
     params : [{verticesID : parentsID}
@@ -442,7 +715,18 @@ function removeParent(){
   });
 }
 document.getElementById('remove parent')!.addEventListener('click',() => {
-  removeParent();
+  //removeParent();
+  const selectListener = (evt : cytoscape.EventObject) => {
+    setFuncBtn("remove parent");
+  };
+  enableFuncMode(()=>{cy.removeListener('select','$node > node',selectListener);
+                       cy.selectionType("single");},
+                 ()=>{removeParent();
+                       cy.selectionType("single");});
+  cy.elements(":selected").unselect();
+  cy.one('select','$node > node',selectListener); 
+  showHelpText("Select parents:");
+  cy.selectionType("additive");
 });
 
 
@@ -503,12 +787,59 @@ function createTable(data : AttributeApiReturn<"getElementDocuments">){
   return table;
 }
 
+
+function getDocIconName(doc : Document){
+  let docIconName : string;
+  if (doc.valid){
+    docIconName = doc.type==="Directory" ? "folder" : "file-earmark";
+  }
+  else {
+    docIconName = doc.type==="Directory" ? "folder-x" : "file-earmark-x";
+  }
+  return docIconName;
+}
+
+function getDocDelIconName(doc : Document){
+  const delIconName = doc.type==="Directory" ? "folder-minus" : "file-earmark-minus";
+  return delIconName;
+}
+
+function setDocValid(doc: Document,row : HTMLTableRowElement, docIconCell : HTMLTableDataCellElement, valid : boolean){
+    if (!valid){
+      row.classList.add('table-danger',"text-danger");
+      doc.valid = false;
+    }
+    else {
+      row.classList.remove('table-danger',"text-danger");
+      doc.valid = true;
+    }
+    const updDocSVG = createSVGElement(getDocIconName(doc));
+    docIconCell.innerHTML="";
+    docIconCell.appendChild(updDocSVG);
+}
+
+function updateDocRow(row : HTMLTableRowElement, docName : HTMLParagraphElement,
+                      docPath :  HTMLParagraphElement, pathTooltip : Bootstrap.Tooltip, docIconCell : HTMLTableDataCellElement,
+                      delBtn : HTMLButtonElement, doc: Document,updDoc : Document){
+  _.assign(doc,updDoc);                      
+  setDocValid(doc,row,docIconCell,doc.valid);
+  docName.innerHTML = updDoc.name;
+  docPath.innerHTML = updDoc.fullPath;
+  docPath.title = doc.fullPath;
+  pathTooltip.dispose();
+  pathTooltip = new Bootstrap.Tooltip(docPath,{container : 'body'});
+  const updDelSVG = createSVGElement(getDocDelIconName(doc));
+  updDelSVG.classList.add('wh-reset');
+  delBtn.innerHTML="";
+  delBtn.appendChild(updDelSVG);
+}
+
 function createRow(tableBody: HTMLTableSectionElement, doc : Document){
   let row = document.createElement('tr');
   row.classList.add("d-flex","flex-wrap");
-  if (!doc.valid){
-    row.classList.add('table-danger','text-danger');
-  }
+  // if (!doc.valid){
+  //   row.classList.add('table-danger','text-danger');
+  // }
     //row.id = "docs-table_"+doc.id;
 
     const docNameCell = document.createElement('th');
@@ -534,22 +865,15 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
 
     const docIconCell = document.createElement('td');
     docIconCell.classList.add('col-2');
-    let docIconName : string;
-    if (doc.valid){
-      docIconName = doc.type==="Directory" ? "folder" : "file-earmark";
-    }
-    else {
-      docIconName = doc.type==="Directory" ? "folder-x" : "file-earmark-x";
-    }
-    const docIcon = createSVGElement(docIconName);
-    docIconCell.appendChild(docIcon);
+    setDocValid(doc,row,docIconCell,doc.valid);
+    // const docIcon = createSVGElement(getDocIconName(doc));
+    // docIconCell.appendChild(docIcon);
 
     const delCell = document.createElement('td');
     delCell.classList.add('col-2');
     const delBtn = document.createElement('button');
     delBtn.classList.add('btn','btn-outline-danger','shadow-none');
-    const delIconName = doc.type==="Directory" ? "folder-minus" : "file-earmark-minus";
-    const delSVG = createSVGElement(delIconName);
+    const delSVG = createSVGElement(getDocDelIconName(doc));
     delSVG.classList.add('wh-reset');
     delBtn.appendChild(delSVG);
     delCell.appendChild(delBtn);
@@ -567,7 +891,6 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
             };
             ipc.send<FileApiReturn<"openFileDialog">>(FileChannel.FILE_CHANNEL, dialogParams).then((dialogReturn) => {
               if (dialogReturn.canceled){
-                console.log("dialog cancelled");
                 return;
               }
               const fullPath = dialogReturn.filePaths[0];
@@ -576,8 +899,9 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
                 params : [{doc : doc, newPath : fullPath, valid : true}]
               };
               ipc.send<FileApiReturn<"updateDoc">>(FileChannel.FILE_CHANNEL, updateParams).then((updDoc) =>{
+                  //if doc is newly connected
                   if (!_.isNil(updDoc)){
-                    row.classList.remove('table-danger',"text-danger");
+                    updateDocRow(row,docName,docPath,pathTooltip,docIconCell,delBtn,doc,updDoc);
                   }
                   else {
                       let eles = cy.elements(":selected");
@@ -597,7 +921,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
                           if (_.isNil(delDoc)){
                             return;
                           }
-                          tableBody.removeChild(row);
+                          //tableBody.removeChild(row);
                           let conParams : FileApi<"connectDocument"> = {
                             method : "connectDocument", 
                             params : [{type : doc.type, fullPath : fullPath, 
@@ -608,7 +932,8 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
                               if (_.isNil(conDoc)){
                                 return;
                               }
-                              createRow(tableBody,conDoc);
+                              updateDocRow(row,docName,docPath,pathTooltip,docIconCell,delBtn,doc,conDoc);
+                              //createRow(tableBody,conDoc);
                           });
                       });
                   }
@@ -622,10 +947,10 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
         };
         ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
            if (!_.isEmpty(err)){
-              row.classList.add('table-danger',"text-danger");
+              setDocValid(doc,row,docIconCell,false);
            }
            else {
-              row.classList.remove('table-danger',"text-danger");
+              setDocValid(doc,row,docIconCell,true);
            }
         });
       }
@@ -795,14 +1120,7 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
 
       const docIconDiv = document.createElement('div');
       docIconDiv.classList.add("align-self-center");
-      let docIconName;
-      if (doc.valid){
-        docIconName = doc.type==="Directory" ? "folder" : "file-earmark";
-      }
-      else {
-        docIconName = doc.type==="Directory" ? "folder-x" : "file-earmark-x";
-      }
-      const docIcon = createSVGElement(docIconName);
+      const docIcon = createSVGElement(getDocIconName(doc));
       docIconDiv.appendChild(docIcon);
 
       eleItem.appendChild(namesDiv);
@@ -941,15 +1259,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
 
     const colDocIcon = document.createElement('div');
     colDocIcon.classList.add('col-auto',"d-flex","align-items-center");
-    let docIconName : string;
-    if (docEles.doc.valid){
-      docIconName = docEles.doc.type==="Directory" ? "folder" : "file-earmark";
-    }
-    else {
-      docIconName = docEles.doc.type==="Directory" ? "folder-x" : "file-earmark-x";
-    }
-    //const docIconName = docEles.doc.type==="Directory" ? "folder" : "file-earmark";
-    const docIcon = createSVGElement(docIconName);
+    const docIcon = createSVGElement(getDocIconName(docEles.doc));
     docIcon.classList.add("bi-search");
     colDocIcon.appendChild(docIcon);
 
@@ -1127,12 +1437,24 @@ function cloneElements(){
         cy.elements().unselect();
         const cytoEles = cy.add(cloneEles);
         setEdgeStyle(cytoEles.edges(),workSpace!);
+        cytoEles.flashClass("highlight-success",500);
         cytoEles.select();
       });
   });
 }
 document.getElementById('clone elements')!.addEventListener('click',() => {
-  cloneElements();
+  const selectListener = (evt : cytoscape.EventObject) => {
+    setFuncBtn("clone elements");
+  };
+  enableFuncMode(()=>{cy.removeListener('select','node',selectListener);
+                       cy.selectionType("single");},
+                 ()=>{cloneElements();
+                       cy.selectionType("single");});
+  cy.elements(":selected").unselect();
+  cy.one('select','node',selectListener); 
+  showHelpText("Select nodes:");
+  cy.selectionType("additive");
+  //cloneElements();
 });
 
 
@@ -1196,9 +1518,13 @@ document.querySelectorAll('input[name="graph-mode"]').forEach((elem) => {
 });
 
 document.getElementById('zoom-fit')!.addEventListener('click',() => {
-  cy.fit(undefined,5);
+  fitZoom();
 });
 
+function fitZoom(){
+  cy.resize();
+  cy.fit(undefined,5);
+}
 
 
 function setActiveListItems(){
@@ -1247,18 +1573,3 @@ const useElem = document.createElementNS('http://www.w3.org/2000/svg', 'use');
   svgElem.appendChild(useElem);
   return svgElem;
 }
-
-// document.getElementById('tester')!.addEventListener('click',() => {
-//     const colR = document.getElementById('right')!;
-//     const colL = document.getElementById('left')!;
-//     if (colR.classList.contains("d-none")){
-//       colR.classList.remove('d-none');
-//       cy.resize();
-//       cy.fit(undefined,5);
-//     }
-//     else {
-//       colR.classList.add('d-none');
-//       cy.resize();
-//       cy.fit(undefined,5);
-//     }
-// });

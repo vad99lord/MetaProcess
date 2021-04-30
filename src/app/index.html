@@ -60,6 +60,11 @@
                                     <use xlink:href="../../icons/custom-icons.svg#bookmarks-union"/>
                                 </svg>
                             </button>
+                            <!-- <button type="button" class="btn btn-success" id="success-btn">
+                                <svg width="1em" height="1em" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#check2"/>
+                                </svg>
+                            </button> -->
                             <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="include into parent">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#bookmarks"/>
@@ -89,7 +94,12 @@
                             <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#zoom-init"/>
                             </svg>
-                    </button>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="search-open" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="open search">
+                            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#search"/>
+                            </svg>
+                        </button>
                         <button type="button" class="btn btn-primary" id="reload">reload</button>
                         </div>
                     </div>
@@ -118,83 +128,88 @@
         </div>
     </div>
     <div class="row flex-grow-1 overflow-hidden">
-        <div class="col-8 flex-grow-1 left mh-100 border-end py-2" id="left">
+        <div class="col-8 flex-grow-1 left mh-100 border-end py-2 position-relative" id="left-pane">
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-3 d-none" style="z-index:900" id="close-btn" aria-label="Close"></button>
+            <div class="alert alert-info position-absolute top-0 start-0 m-3 d-none" style="z-index:900" id="help-alert" role="alert"></div>
             <div id="cy"></div>
         </div>
-        <div class="col-4 right mh-100 overflow-auto custom-scroll" id="right">
-            <div class="input-group my-3">
-                <input type="text" id="search-text" class="form-control w-25" placeholder="Search">
-                <label class="input-group-text" for="search-type">Mode</label>
-                <select class="form-select" id="search-type">
-                    <option selected value="docs">Docs</option>
-                    <option value="eles">Elements</option>
-                </select>
-                <button class="btn btn-outline-secondary"  id="search-clear" type="button">
-                    <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
-                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#x-circle"/>
-                    </svg>
-                </button>
-                <button class="btn btn-outline-success" id="search" type="button">
-                    <svg class="bi wh-reset" fill="currentColor">
-                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#search"/>
-                    </svg>
-                </button>
-                <div class="invalid-feedback">
-                    empty query
-                </div>
-            </div>
-            <div id="search-table"></div>
-
-            <div class="btn-toolbar mb-1" id="results-btns">
-                <div class="btn-group me-auto">
-                    <button type="button" class="btn btn-outline-primary" id="collapse">
-                        <svg class="bi bi-search wh-reset" fill="currentColor">
-                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrows-collapse" />
-                        </svg>
-                    </button>
-                    <button type="button" class="btn btn-outline-primary" id="expand">
-                        <svg class="bi bi-search wh-reset" fill="currentColor">
-                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrows-expand" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-secondary" id="clear-results">
-                        <svg class="bi bi-search wh-reset" fill="currentColor">
-                            <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#x-square" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div id="empty-search" class="d-none alert alert-info">no results found</div>
-            <div class="list-group w-100" id="collapse-parent"></div>
-
-            <div class="row">
-                <div class="col-md-12 col-lg-8">
+        <div class="col-4 right mh-100 overflow-auto custom-scroll" id="right-pane">
+                <!-- <div class="h-50 overflow-auto custom-scroll"> -->
                     <div class="input-group my-3">
-                        <input type="text" id="elem-name" class="form-control">
-                        <button class="btn btn-outline-success" id="update-elem-name" type="button">
+                        <input type="text" id="search-text" class="form-control w-25" placeholder="Search">
+                        <label class="input-group-text" for="search-type">Mode</label>
+                        <select class="form-select" id="search-type">
+                            <option selected value="docs">Docs</option>
+                            <option value="eles">Elements</option>
+                        </select>
+                        <button class="btn btn-outline-secondary"  id="search-clear" type="button">
                             <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrow-return-left" />
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#x-circle"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-outline-success" id="search" type="button">
+                            <svg class="bi wh-reset" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#search"/>
+                            </svg>
+                        </button>
+                        <div class="invalid-feedback">
+                            empty query
+                        </div>
+                    </div>
+                    <div id="search-table"></div>
+        
+                    <div class="btn-toolbar mb-1" id="results-btns">
+                        <div class="btn-group me-auto">
+                            <button type="button" class="btn btn-outline-primary" id="collapse">
+                                <svg class="bi bi-search wh-reset" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrows-collapse" />
+                                </svg>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="expand">
+                                <svg class="bi bi-search wh-reset" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrows-expand" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary" id="clear-results">
+                                <svg class="bi bi-search wh-reset" fill="currentColor">
+                                    <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#x-square" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+        
+                    <div id="empty-search" class="d-none alert alert-info">no results found</div>
+                    <div class="list-group w-100" id="collapse-parent"></div>
+                <!-- </div> -->
+                <!-- <div class="h-50 overflow-auto custom-scroll"> -->
+                    <div class="row g-0">
+                        <div class="col-md-12 col-lg-8">
+                            <div class="input-group my-3">
+                                <input type="text" id="elem-name" class="form-control">
+                                <button class="btn btn-outline-success" id="update-elem-name" type="button">
+                                    <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
+                                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#arrow-return-left" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive custom-scroll" id="docs-table"></div> 
+                    <div class="btn-group" id="docs-ele-btns">
+                        <button type="button" class="btn btn-outline-primary" id="open-file-dialog">
+                            <svg class="bi bi-search wh-reset" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file-earmark-plus" />
+                            </svg>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="open-dir-dialog">
+                            <svg class="bi bi-search wh-reset" fill="currentColor">
+                                <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#folder-plus" />
                             </svg>
                         </button>
                     </div>
-                </div>
-            </div>
-            <div class="table-responsive custom-scroll" id="docs-table"></div> 
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary" id="open-file-dialog">
-                    <svg class="bi bi-search wh-reset" fill="currentColor">
-                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#file-earmark-plus" />
-                    </svg>
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="open-dir-dialog">
-                    <svg class="bi bi-search wh-reset" fill="currentColor">
-                        <use xlink:href="../../node_modules/bootstrap-icons/bootstrap-icons.svg#folder-plus" />
-                    </svg>
-                </button>
-            </div>
+                <!-- </div>  -->
         </div>
     </div>
 </div>

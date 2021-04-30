@@ -30,3 +30,13 @@ a:not(.collapsed) .bi-search {
   width: 1em;
   height: 1em;
 }
+
+.upper {
+  max-width: 50%;
+  overflow: auto;
+}
+.lower{
+  max-height: 50%;
+  height: 50%;
+  overflow: auto;
+}
