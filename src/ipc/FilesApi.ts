@@ -110,9 +110,10 @@ export class FileApi_ {
         return err;
     }
 
-    public async openFileDialog(params: {type: "openFile"|"openDirectory"}){
+    public async openFileDialog(params: {type: "openFile"|"openDirectory", title ?: string}){
+        const title = params.title ?? "Choose item to tag:";
         let openDialogReturn = await dialog.showOpenDialog({
-            title : "Choose item to tag:",
+            title : title,
             properties: [params.type],
             filters: [
                 { name: 'All Files', extensions: ['*'] }

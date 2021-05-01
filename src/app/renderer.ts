@@ -33,12 +33,14 @@ const ipc = new IpcService(ipcRenderer);
 
 const handler = new IpcHandler(ipcRenderer);
 
-var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new Bootstrap.Tooltip(tooltipTriggerEl,{
-    container: 'body'
-  });
-})
+function initTooltips(){
+  const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new Bootstrap.Tooltip(tooltipTriggerEl,{
+      container: 'body'
+    });
+  })
+}
 
 initWorkspace();
 
@@ -58,16 +60,37 @@ function saveWpName(){
 }
 
 
-ipcRenderer.once(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
-  let userReq = req as WorkspaceWinApi<ClassMethods<WorkspaceWinApi_>>;
-  if (userReq.method!=="saveWorkspace"){
-    return;
-  }
+function saveWorkspace(){
+  let savePromise = savePositions().then(()=>saveWpName());
+  savePromise.then((wp)=>{
+      createToast("bg-success","workspace has been saved!");
+  });
+}
+function closeWorkspace(){
   let savePromise = savePositions().then(()=>saveWpName());
   savePromise.then((wp)=>{
     let closeParams : WorkspaceApi<"closeWorkspace"> = {method : "closeWorkspace", params : [{}]}
-    return ipc.send<WorkspaceApiReturn<"closeWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, closeParams);  
+    return ipc.send<WorkspaceApiReturn<"closeWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, closeParams);
   });
+}
+
+ipcRenderer.on(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
+  let userReq = req as WorkspaceWinApi<ClassMethods<WorkspaceWinApi_>>;
+  switch(userReq.method){
+    case "saveWorkspace": {
+      saveWorkspace();
+      break;
+    };
+    case "closeWorkspace": {
+      closeWorkspace();
+      break;
+    };
+    case "findInWorkspace": {
+      toggleRightPane(true);
+      toggleFullSearch(true);
+      break;
+    };
+  }
 });
 
 document.getElementById('reload')!.addEventListener('click', () => {
@@ -79,11 +102,12 @@ let cy : cytoscape.Core;
 const tapHandler = function(event : cytoscape.EventObject){
   let evtTarget = event.target;
   if (evtTarget === cy){
-    disableDocsTable(true);
+    // disableDocsTable(true);
     toggleRightPane(false);
     return;
   }
-  disableDocsTable(false);
+  // disableDocsTable(false);
+  toggleFullSearch(false);
   toggleRightPane(true);
   const ele : cytoscape.SingularData = evtTarget;
 
@@ -121,13 +145,12 @@ function initWorkspace(){
       workSpace = wp;
       (<HTMLInputElement>document.getElementById('wp-name'))!.value = _.isEmpty(workSpace!.name) ? "MetaProcess" : workSpace!.name;
       cy = initGraph(workSpace.isTreeMode);
-      
-      //(<HTMLInputElement>document.getElementById('graph-mode')!).checked = workSpace.isTreeMode;
+
+      initTooltips();
       initModeRadio(workSpace.isTreeMode);
       toggleSearchButtons(true);
       toggleHelpBtns(false);
-      //TODO: toggle all elements smoother
-      //toggleRightPane(false);
+      // toggleRightPane(false);
       setWorkspaceMode(workSpace);
     })
 }
@@ -195,21 +218,24 @@ const cy = cytoscape({
       selector: '.highlight',
       css: {
         'background-color' : infoColor,
-        'line-color': infoColor
+        'line-color': infoColor,
+        'target-arrow-color' : infoColor
       }
     },
     {
       selector: '.highlight-success',
       css: {
         'background-color' : successColor,
-        'line-color': successColor
+        'line-color': successColor,
+        'target-arrow-color' : successColor
       }
     },
     {
       selector: '.highlight-danger',
       css: {
         'background-color' : dangerColor,
-        'line-color': dangerColor
+        'line-color': dangerColor,
+        'target-arrow-color' : dangerColor
       }
     }
   ],
@@ -226,8 +252,24 @@ return cy;
 }
 
 
+function toggleFullSearch(show : boolean){
+  const tableDiv = document.getElementById('table-div')!;
+  const searchdiv = document.getElementById('search-div')!;
+  if (show){
+    tableDiv.classList.add("d-none");
+    searchdiv.classList.remove("h-50","border-bottom");
+    searchdiv.classList.add("h-100");
+  }
+  else{
+    tableDiv.classList.remove("d-none");
+    searchdiv.classList.remove("h-100");
+    searchdiv.classList.add("h-50","border-bottom");
+  }
+}
+
 document.getElementById('search-open')!.addEventListener('click',(ev) => {
   toggleRightPane(true);
+  toggleFullSearch(true);
 });
 
 function disableDocsTable(disable : boolean){
@@ -239,6 +281,14 @@ function disableDocsTable(disable : boolean){
   document.querySelectorAll<HTMLButtonElement>("#docs-ele-btns button").forEach((btn) => {
     btn.disabled = disable;
   });
+  // if (disable)
+  //   document.getElementById('table-div')!.classList.add("d-none");
+  // else {
+  //   document.getElementById('table-div')!.classList.remove("d-none");
+  //   const searchdiv = document.getElementById('search-div')!;
+  //   searchdiv.classList.remove("h-100");
+  //   searchdiv.classList.add("h-50");
+  // }  
 }
 
 function toggleRightPane(show : boolean){
@@ -258,16 +308,23 @@ document.getElementById('wp-name')!.addEventListener('input',(ev) => {
   workSpace!.name = wpInput.value;
 });
 
+function createToast(color : "bg-success"|"bg-danger", message : string){
+  const toast = document.getElementById("toast")!;
+  toast.querySelector("#toast-text")!.innerHTML = message;
+  toast.classList.remove("d-none","bg-success","bg-danger");
+  toast.classList.add(color);
+  new Bootstrap.Toast(toast).show();
+}
+
 function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
-  // console.log(source.id());
-  // console.log(target.id());
-  if (!source.edgesTo(target).empty()) {
-    alert("edge is already presented");
+  if (!source.edgesTo(target).empty()||workSpace!.isTreeMode&&!target.edgesTo(source).empty()) {
+    createToast("bg-danger","edge is already presented");
     disableFuncMode();
     return;
   }
   if (source.same(target)) {
-    alert("can't make self loops");
+    // alert("can't make self loops");
+    createToast("bg-danger","can't make self loops");
     disableFuncMode();
     return;
   }
@@ -457,16 +514,12 @@ function addSrcEdges(){
       // disableFuncMode();
       return;
     }
-    if (!src.edgesTo(dests).empty()) {
-      alert("edge is already presented");
+    if (!src.edgesTo(dests).empty()||workSpace!.isTreeMode&&!src.edgesWith(dests).empty()) {
+      // alert("edge is already presented");
+      createToast("bg-danger","edge is already presented");
       mainV = [];
       return;
     }
-    // if (dests.contains(src)) {
-    //   alert("can't make self loops");
-    //   mainV = [];
-    //   return;
-    // }
 
     let srcID = src.id();
     const destIDs = dests.map(function( ele ){
@@ -538,7 +591,8 @@ function unionParent(){
     return;
   let parents = nodes.parent();
   if (parents.size()>1){
-      alert("selected nodes have different parents!");
+      // alert("selected nodes have different parents!");
+      createToast("bg-danger","selected nodes have different parents");
       return;
   }
   let unionParentID : string | undefined;
@@ -733,19 +787,21 @@ document.getElementById('remove parent')!.addEventListener('click',() => {
 document.getElementById('update-elem-name')!.addEventListener('click',() => {
   let eles = cy.elements(":selected");
   if (eles.empty()){
-      alert("select element to update name!");
+      // alert("select element to update name!");
+      createToast("bg-danger","select element to update name");
       return;
   }
   else {
     if (eles.size()>1){
-        alert("select 1 element onlyto update name!");
+        // alert("select 1 element onlyto update name!");
+        createToast("bg-danger","select 1 element only to update name!");
         return;
     }
     else {
        const ele = eles.first();
        let elemName = (<HTMLInputElement>document.getElementById('elem-name'))!.value;
        if (ele.data('name')===elemName){
-          alert("same name!");
+          // alert("same name!");
           return;
        }
        let updateParams : VertexApi<"updateElementName"> = {method : "updateElementName", params : [{
@@ -887,7 +943,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
         if (!doc.valid){
             let dialogParams : FileApi<"openFileDialog"> = {
               method : "openFileDialog", 
-              params : [{type : doc.type==="Directory" ? "openDirectory": "openFile"}]
+              params : [{type : doc.type==="Directory" ? "openDirectory": "openFile", title : "choose item to retag:"}]
             };
             ipc.send<FileApiReturn<"openFileDialog">>(FileChannel.FILE_CHANNEL, dialogParams).then((dialogReturn) => {
               if (dialogReturn.canceled){
@@ -906,7 +962,8 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
                   else {
                       let eles = cy.elements(":selected");
                       if (eles.empty() || eles.size() > 1){
-                          alert("select one element to update document!");
+                          // alert("select one element to update document!");
+                          createToast("bg-danger","select one element to update document!");
                           return;
                       }
                       const elem : Element = {
@@ -959,7 +1016,8 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
     delBtn.addEventListener('click',(e)=>{
       let eles = cy.elements(":selected");
       if (eles.empty() || eles.size() > 1){
-          alert("select one element to untag document!");
+          // alert("select one element to untag document!");
+          createToast("bg-danger","select one element to untag document!");
           return;
       }
       const ele : Element = {
@@ -1004,7 +1062,8 @@ function tagDocument(itemType : "File"|"Directory",fullPath : string){
     let nodes = cy.nodes(":selected");
     let edges = cy.edges(":selected");
     if (nodes.empty() && edges.empty()){
-        alert("choose edges or nodes to tag!");
+        // alert("choose edges or nodes to tag!");
+        createToast("bg-danger","edge is already presented");
         return;
     }
     const nodesID = nodes.map(function(ele){
@@ -1062,13 +1121,13 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
     flexRow.classList.add("d-flex","justify-content-between","align-items-center");
     const eleName = document.createElement('h5');
     eleName.classList.add("text-truncate","w-75");
-    eleName.innerHTML = eleDocs.name;
+    eleName.innerText = eleDocs.name;
 
     const iconsCol = document.createElement('div');
     iconsCol.classList.add("d-flex","flex-column","align-items-end");
     const elesSpan = document.createElement('span');
     elesSpan.classList.add("badge","bg-primary","rounded-pill","mb-1");
-    elesSpan.innerHTML = _.toString(eleDocs.documents.length);
+    elesSpan.innerText = _.toString(eleDocs.documents.length);
     const expandIcon = createSVGElement("chevron-down");
     expandIcon.classList.add("bi-search","bi-chevron-down");
 
@@ -1093,7 +1152,7 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
     const openBtn = document.createElement('button');
     openBtn.type = "button";
     openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
-    openBtn.innerHTML = "show element "; //or document
+    openBtn.innerText = "show element "; //or document
     connectHtmlElement(openBtn,eleDocs.id);
     const openIcon = createSVGElement("box-arrow-up-right");
     openIcon.classList.add("wh-reset");
@@ -1111,10 +1170,10 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
       namesDiv.classList.add("w-25","flex-grow-1");
       const docName = document.createElement('h6');
       docName.classList.add("text-truncate","w-75");
-      docName.innerHTML = doc.name;
+      docName.innerText = doc.name;
       const docPath = document.createElement('p');
       docPath.classList.add("m-0","text-truncate","w-75");
-      docPath.innerHTML = doc.fullPath;
+      docPath.innerText = doc.fullPath;
       namesDiv.appendChild(docName);
       namesDiv.appendChild(docPath);
 
@@ -1228,7 +1287,6 @@ function findElementsWithDocs(searchValue : string) {
   });
 }
 
-
 function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElements">,docElesList : HTMLElement){
   let docsEles = _.map(data,(docEles)=>{
     const edgesData : (ElementName & Element)[] = _.map(docEles.edges, (e)=>{return {id : e.id, name : e.name,type : "Edge"}});
@@ -1270,17 +1328,17 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
     rowName.classList.add("d-flex","justify-content-between","align-items-start");
     const docName = document.createElement('h5');
     docName.classList.add("mb-1","text-truncate","w-75");
-    docName.innerHTML = docEles.doc.name;
+    docName.innerText = docEles.doc.name;
     const elesSpan = document.createElement('span');
     elesSpan.classList.add("badge","bg-primary","rounded-pill");
-    elesSpan.innerHTML = _.toString(docEles.eles.length);
+    elesSpan.innerText = _.toString(docEles.eles.length);
     rowName.appendChild(docName);
     rowName.appendChild(elesSpan);
 
     const rowPath = <HTMLDivElement>rowName.cloneNode(false);
     const docPath = document.createElement('p');
     docPath.classList.add("mb-1","text-truncate","w-75");
-    docPath.innerHTML = docEles.doc.fullPath;
+    docPath.innerText = docEles.doc.fullPath;
     const expandIcon = createSVGElement("chevron-down");
     expandIcon.classList.add("bi-search","bi-chevron-down");
     rowPath.appendChild(docPath);
@@ -1304,7 +1362,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
     const openBtn = document.createElement('button');
     openBtn.type = "button";
     openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
-    openBtn.innerHTML = "show element "; //or document
+    openBtn.innerText = "show element "; //or document
     connectHtmlDoc(openBtn,docEles.doc);
     const openIcon = createSVGElement("box-arrow-up-right");
     openIcon.classList.add("wh-reset");
@@ -1317,7 +1375,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
       const eleItem = document.createElement('li');
       eleItem.classList.add("list-group-item","d-flex","justify-content-between",
       "align-items-center","list-group-item-action","cursor-pointer");
-      eleItem.innerHTML=ele.name;
+      eleItem.innerText=ele.name;
       const eleIconName = ele.type==="Vertex" ? "bookmark" : "diagram-2";
       const eleIcon = createSVGElement(eleIconName);
       expandIcon.classList.add("bi-search");
@@ -1358,22 +1416,30 @@ function findDocumentsWithElements(searchValue : string) {
 }
 
 
+function searchDocsEles(){
+  const searchInput = (<HTMLInputElement>document.getElementById('search-text'))!
+  let searchValue = searchInput.value;
+  if (_.isEmpty(searchValue)) {
+    searchInput.classList.add('is-invalid');
+    return;
+  }
+  searchInput.classList.remove('is-invalid');
+  const searchDocs = (<HTMLSelectElement>document.getElementById("search-type"))!;
+  if (_.isEqual(searchDocs.value,"eles")) {
+    findElementsWithDocs(searchValue);
+  }
+  else {
+    findDocumentsWithElements(searchValue);
+  };
+}
 document.getElementById('search')!.addEventListener('click',() => {
-        const searchInput = (<HTMLInputElement>document.getElementById('search-text'))!
-        let searchValue = searchInput.value;
-        if (_.isEmpty(searchValue)) {
-          searchInput.classList.add('is-invalid');
-          return;
-        }
-        searchInput.classList.remove('is-invalid');  
-
-        const searchDocs = (<HTMLSelectElement>document.getElementById("search-type"))!;
-        if (_.isEqual(searchDocs.value,"eles")) {
-          findElementsWithDocs(searchValue);
-        }
-        else {
-          findDocumentsWithElements(searchValue);
-        };
+  searchDocsEles();
+})
+document.getElementById('search-text')!.addEventListener('keydown',(e) => {
+  const key = e.key;
+  if (key === "Enter") {
+      searchDocsEles();
+  }
 })
 
 document.getElementById('search-clear')!.addEventListener('click',() => {
@@ -1489,18 +1555,22 @@ function setWorkspaceMode(wp : Workspace){
 
 function setTreeMode(){
   const cloneBtn = <HTMLButtonElement>document.getElementById('clone elements')!;
+  const addEdgesBtn = <HTMLButtonElement>document.getElementById('add src edges')!;
   // cloneBtn.style.visibility = 'hidden';
   // cloneBtn.style.display = 'none';
   cloneBtn.disabled = true;
+  addEdgesBtn.disabled = false;
   workSpace!.isTreeMode = true;
   setTreeEdges(cy.edges());
 }
 
 function setProcessMode(){
   const cloneBtn = <HTMLButtonElement>document.getElementById('clone elements')!;
+  const addEdgesBtn = <HTMLButtonElement>document.getElementById('add src edges')!;
   // cloneBtn.style.visibility = 'visible';
   // cloneBtn.style.display = 'inline-block';
   cloneBtn.disabled = false;
+  addEdgesBtn.disabled = true;
   workSpace!.isTreeMode = false;
   setProcessEdges(cy.edges());
 }

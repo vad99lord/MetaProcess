@@ -28,5 +28,7 @@ export interface WorkspaceWinApi<T extends ClassMethods<WorkspaceWinApi_>> exten
 
 export interface WorkspaceWinApi_{
     saveWorkspace(params?: any) : void;
+    closeWorkspace(params?: any) : void;
+    findInWorkspace(params?: any) : void;
     updateWorkspace(params?: any) : void;
 }

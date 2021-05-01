@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, WebContents} from 'electron';
+import {app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, Menu, shell, WebContents} from 'electron';
 import * as _ from "lodash";
 import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
 import { AttributeApi_ } from '../ipc/AttributesApi';
@@ -13,6 +13,7 @@ import { QueryRequest } from '../ipc/QueryRequest';
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from '../ipc/RemoteApi';
 import { WorkspaceWinApi,WorkspaceApi_ } from '../ipc/WorkspaceApi';
 import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
+import {createMenu} from './app-menu'
 
 //auto reload view from source changes, dev only
 if (_.isEqual(_.last(process.argv),"reload")){
@@ -26,7 +27,7 @@ const openedWP = new Map<number,string>();
 export class Workspace implements WorkspaceApi_{
   private closeChan ?: CloseChannel;
   constructor(){ 
-    app.on('ready', this.createWindow);
+    app.on('ready', this.onReady);
     app.on('window-all-closed', this.onWindowAllClosed);
     app.on('activate', this.onActivate);
     //this.createWorkspace.bind(this);
@@ -47,6 +48,11 @@ export class Workspace implements WorkspaceApi_{
     }
   }
 
+  private onReady = () => {
+    createMenu(app,shell);
+    this.createWindow();
+  }
+
   private createWindow = () => {
     this.wpListWindow = new BrowserWindow({
       height: 600,
@@ -56,9 +62,13 @@ export class Workspace implements WorkspaceApi_{
         nodeIntegration: true, // makes it possible to use `require` within our index.html
         enableRemoteModule : true, // remove remove after debugging!
       },
-      show : false
+      show : false,
+      resizable: false
     });
     this.wpListWindow.loadFile('./src/app/workspaces.html');
+    //no menu for start window
+    this.wpListWindow.removeMenu();
+    app.dock?.hide(); //hide menu bar for macOS  
     this.wpListWindow.once('ready-to-show', () => {
       this.wpListWindow!.show();
     })
@@ -88,18 +98,12 @@ export class Workspace implements WorkspaceApi_{
         setTimeout(() => {
               wpWin.show();
             }, 500);
-      })
-      // wpWin.webContents.on('dom-ready', () => {
-      //   setTimeout(() => {
-      //     this.wpListWindow!.hide();
-      //     wpWin.show();
-      //   }, 500);
-      // })
+      });
       wpWin.once('close', (e) => {
         e.preventDefault();
         //this.send();
-        const saveParams : WorkspaceWinApi<"saveWorkspace"> = { method: "saveWorkspace", params: [{}]};
-        IpcSender.send(WorkspaceChannel.WORKSPACE_CHANNEL,wpWin,saveParams);
+        const closeParams : WorkspaceWinApi<"closeWorkspace"> = { method: "closeWorkspace", params: [{}]};
+        IpcSender.send(WorkspaceChannel.WORKSPACE_CHANNEL,wpWin,closeParams);
         //wpWin.webContents.send(WorkspaceChannel.WORKSPACE_CHANNEL,"saveWP");
       })
       //this.closeChan!.send(win);
@@ -120,6 +124,7 @@ export class Workspace implements WorkspaceApi_{
     });
     //wpWin.webContents.openDevTools();
     wpWin.loadFile('./src/app/index.html');
+    // wpWin.removeMenu();
     wpWin.maximize();
     return wpWin;
   }
