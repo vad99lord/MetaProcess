@@ -1,4 +1,4 @@
-import {BrowserWindow, IpcMainEvent} from 'electron';
+import { BrowserWindow, IpcMainEvent } from 'electron';
 
 export interface IpcMainChannel {
   getName(): string;

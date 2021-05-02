@@ -1,14 +1,12 @@
-import { IpcService } from "../ipc/IpcService";
-import * as _ from "lodash";
-import { IpcHandler } from "../ipc/IpcHandler";
-import { AttributeApi, AttributeApiReturn } from "../ipc/AttributesApi";
 import { Workspace } from ".prisma/client";
+import { ipcRenderer } from 'electron';
+import * as _ from "lodash";
+import { AttributeApi, AttributeApiReturn } from "../ipc/AttributesApi";
 import { AttributeChannel } from "../ipc/AttributesChannel";
-import {ipcRenderer} from 'electron';
-import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
-import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
+import { IpcService } from "../ipc/IpcService";
 import { ClassMethods } from "../ipc/RemoteApi";
-import { IpcSender } from "../ipc/IpcSender";
+import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
+import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
 //const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
 
 const ipc = new IpcService(ipcRenderer);

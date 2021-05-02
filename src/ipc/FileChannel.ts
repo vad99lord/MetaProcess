@@ -1,8 +1,8 @@
-import {IpcChannelInterface} from "./IpcChannelInterface";
-import {IpcMainInvokeEvent} from 'electron';
-import { QueryRequest } from "./QueryRequest";
-import { ClassMethods, MethodArgumentTypes } from "./RemoteApi";
+import { IpcMainInvokeEvent } from 'electron';
 import { FileApi, FileApi_ } from "./FilesApi";
+import { IpcChannelInterface } from "./IpcChannelInterface";
+import { QueryRequest } from "./QueryRequest";
+import { ClassMethods } from "./RemoteApi";
 
 export class FileChannel implements IpcChannelInterface {
   public static readonly FILE_CHANNEL = 'FILE_CHANNEL'

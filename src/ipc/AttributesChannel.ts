@@ -1,9 +1,8 @@
-import {IpcChannelInterface} from "./IpcChannelInterface";
-import {IpcMainInvokeEvent} from 'electron';
-import { QueryRequest } from "./QueryRequest";
-import { VertexApi_, VertexApi} from "./VerticesApi";
-import { ClassMethods, MethodArgumentTypes } from "./RemoteApi";
+import { IpcMainInvokeEvent } from 'electron';
 import { AttributeApi, AttributeApi_ } from "./AttributesApi";
+import { IpcChannelInterface } from "./IpcChannelInterface";
+import { QueryRequest } from "./QueryRequest";
+import { ClassMethods } from "./RemoteApi";
 
 export class AttributeChannel implements IpcChannelInterface {
   public static readonly ATTRIBUTE_CHANNEL = 'ATTRIBUTE_CHANNEL'

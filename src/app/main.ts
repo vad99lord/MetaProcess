@@ -1,19 +1,16 @@
-import {app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, Menu, shell, WebContents} from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron';
 import * as _ from "lodash";
-import {IpcChannelInterface} from ".././ipc/IpcChannelInterface";
+import { IpcChannelInterface } from ".././ipc/IpcChannelInterface";
 import { AttributeApi_ } from '../ipc/AttributesApi';
 import { AttributeChannel } from '../ipc/AttributesChannel';
 import { CloseChannel } from '../ipc/CloseChannel';
 import { FileChannel } from '../ipc/FileChannel';
 import { FileApi_ } from '../ipc/FilesApi';
-import { IpcMainChannel } from '../ipc/IpcMainChannel';
 import { IpcSender } from '../ipc/IpcSender';
 import { QueryChannel } from '../ipc/QueryChannel';
-import { QueryRequest } from '../ipc/QueryRequest';
-import { ClassMethods, MethodArgumentTypes, RemoteApi } from '../ipc/RemoteApi';
-import { WorkspaceWinApi,WorkspaceApi_ } from '../ipc/WorkspaceApi';
+import { WorkspaceApi_, WorkspaceWinApi } from '../ipc/WorkspaceApi';
 import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
-import {createMenu} from './app-menu'
+import { createMenu } from './app-menu';
 
 //auto reload view from source changes, dev only
 if (_.isEqual(_.last(process.argv),"reload")){

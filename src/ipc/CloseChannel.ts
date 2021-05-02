@@ -1,7 +1,5 @@
-import {IpcChannelInterface} from "./IpcChannelInterface";
-import {App, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent} from 'electron';
+import { BrowserWindow, IpcMainEvent } from 'electron';
 import { IpcMainChannel } from "./IpcMainChannel";
-import { send } from "process";
 
 export class CloseChannel implements IpcMainChannel{
   public static readonly CLOSE_CHANNEL = 'CLOSE_CHANNEL';

@@ -1,10 +1,10 @@
-import {IpcChannelInterface} from "./IpcChannelInterface";
-import {BrowserWindow, IpcMainInvokeEvent} from 'electron';
-import { QueryRequest } from "./QueryRequest";
-import { ClassMethods, MethodArgumentTypes } from "./RemoteApi";
-import { WorkspaceApi, WorkspaceApi_, WorkspaceWinApi, WorkspaceWinApi_ } from "./WorkspaceApi";
+import { IpcMainInvokeEvent } from 'electron';
 import * as _ from "lodash";
 import { Workspace } from "../app/main";
+import { IpcChannelInterface } from "./IpcChannelInterface";
+import { QueryRequest } from "./QueryRequest";
+import { ClassMethods } from "./RemoteApi";
+import { WorkspaceApi, WorkspaceApi_ } from "./WorkspaceApi";
 
 export class WorkspaceChannel implements IpcChannelInterface {
   public static readonly WORKSPACE_CHANNEL = 'WORKSPACE_CHANNEL'

@@ -1,6 +1,6 @@
-import {Prisma, Workspace } from '@prisma/client'
-import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
+import { Prisma, Workspace } from '@prisma/client';
 import { IpcMainInvokeEvent } from 'electron';
+import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 
 export interface WorkspaceApi<T extends ClassMethods<WorkspaceApi_>> extends RemoteApi{
     method : T,

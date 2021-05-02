@@ -1,5 +1,4 @@
-import {BrowserWindow, IpcRenderer} from 'electron';
-import {IpcRequest} from "./IpcRequest";
+import { BrowserWindow } from 'electron';
 import { QueryRequest } from './QueryRequest';
 
 export class IpcSender{

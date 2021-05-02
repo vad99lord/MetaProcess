@@ -1,5 +1,4 @@
-import {IpcRenderer} from 'electron';
-import {IpcRequest} from "./IpcRequest";
+import { IpcRenderer } from 'electron';
 import { QueryRequest } from './QueryRequest';
 
 export class IpcService {

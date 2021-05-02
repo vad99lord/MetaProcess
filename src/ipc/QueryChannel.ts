@@ -1,8 +1,8 @@
-import {IpcChannelInterface} from "./IpcChannelInterface";
-import {IpcMainInvokeEvent} from 'electron';
+import { IpcMainInvokeEvent } from 'electron';
+import { IpcChannelInterface } from "./IpcChannelInterface";
 import { QueryRequest } from "./QueryRequest";
-import { VertexApi_, VertexApi} from "./VerticesApi";
-import { ClassMethods, MethodArgumentTypes } from "./RemoteApi";
+import { ClassMethods } from "./RemoteApi";
+import { VertexApi, VertexApi_ } from "./VerticesApi";
 
 export class QueryChannel implements IpcChannelInterface {
   public static readonly QEURY_CHANNEL = 'QUERY_CHANNEL'

@@ -1,11 +1,10 @@
-import { PrismaClient, Prisma, File, Directory, Edge, Vertex } from '@prisma/client'
-import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
-import {DocumentType,Document} from './AttributesApi';
+import { Directory, Edge, File, Prisma, PrismaClient, Vertex } from '@prisma/client';
+import { dialog, shell } from 'electron';
+import { constants as fsContants, PathLike, promises as fsPromises } from 'fs';
 import * as _ from "lodash";
-import {shell} from 'electron';
-import { dialog } from 'electron';
 import path from 'path';
-import { constants as fsContants,PathLike,promises as fsPromises} from 'fs';
+import { Document, DocumentType } from './AttributesApi';
+import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 
 export interface FileApi<T extends ClassMethods<FileApi_>> extends RemoteApi{
     method : T,

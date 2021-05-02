@@ -1,4 +1,4 @@
-import {IpcRenderer, IpcRendererEvent} from 'electron';
+import { IpcRenderer, IpcRendererEvent } from 'electron';
 import * as _ from 'lodash';
 
 export class IpcHandler {

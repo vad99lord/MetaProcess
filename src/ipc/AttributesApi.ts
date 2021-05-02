@@ -1,9 +1,8 @@
-import { PrismaClient, Prisma, Directory, Edge, Vertex, PrismaPromise} from '@prisma/client'
-import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
-import { Element,ElementName,ElementType } from './FilesApi';
+import { Directory, Edge, Prisma, PrismaClient, Vertex } from '@prisma/client';
 import cuid from 'cuid';
 import * as _ from "lodash";
-import { identity } from 'lodash';
+import { Element, ElementName, ElementType } from './FilesApi';
+import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import { VertexApi_ } from './VerticesApi';
 
 

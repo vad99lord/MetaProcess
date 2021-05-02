@@ -1,25 +1,21 @@
 import { IpcService } from "../ipc/IpcService";
-import {VertexApi,VertexApiReturn, VertexApi_, VertexPos} from "../ipc/VerticesApi";
+import {VertexApi,VertexApiReturn, VertexPos} from "../ipc/VerticesApi";
 import { QueryChannel } from "../ipc/QueryChannel";
-import {ElementDefinition,NodeDefinition,EdgeDefinition} from 'cytoscape';
+import {ElementDefinition} from 'cytoscape';
 import * as _ from "lodash";
 import cytoscape = require('cytoscape');
-import { removeListener } from "process";
-import { AttributeApi, AttributeApiReturn,DocumentType,Document, ElementDocuments } from "../ipc/AttributesApi";
+import { AttributeApi, AttributeApiReturn,Document } from "../ipc/AttributesApi";
 import { AttributeChannel } from "../ipc/AttributesChannel";
 import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
 import { IpcHandler } from "../ipc/IpcHandler";
-import { CloseChannel } from "../ipc/CloseChannel";
-import { clone, isNil } from "lodash";
 import { Workspace } from ".prisma/client";
 import {ipcRenderer} from 'electron';
 import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
 import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } from "../ipc/WorkspaceApi";
 import { ClassMethods } from "../ipc/RemoteApi";
-import Bootstrap, { Tooltip } from "bootstrap";
+import Bootstrap from "bootstrap";
 import cuid = require("cuid");
-import { F_OK } from "constants";
 //const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
 
 //TODO: REMOVE! DEBUG for reload after actions

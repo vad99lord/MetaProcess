@@ -1,10 +1,9 @@
-import { PrismaClient, Prisma } from '@prisma/client'
-import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
-import {EdgeDefinition, ElementDefinition, NodeDefinition,Position} from 'cytoscape';
-import { edges, vertices } from '../../prisma/mocks';
-import {Element, ElementType} from './FilesApi';
-import * as _ from "lodash";
+import { Prisma, PrismaClient } from '@prisma/client';
 import cuid from 'cuid';
+import { ElementDefinition, Position } from 'cytoscape';
+import * as _ from "lodash";
+import { Element } from './FilesApi';
+import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
     method : T,
