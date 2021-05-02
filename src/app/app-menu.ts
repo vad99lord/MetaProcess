@@ -9,9 +9,9 @@ export function createMenu(app: App, shell: Shell) {
   const appMenu : MenuItemConstructorOptions | null = isMac ? { role: 'appMenu' } : null;
   
   const fileMenu : MenuItemConstructorOptions = {
-    label: 'File',
+    label: 'Файл',
     submenu: [{
-      label: 'Save',
+      label: 'Сохранить',
       accelerator: 'CommandOrControl+S',
       click: (item,win,key) => {
         // console.log("save");
@@ -22,14 +22,14 @@ export function createMenu(app: App, shell: Shell) {
         IpcSender.send(WorkspaceChannel.WORKSPACE_CHANNEL,win,saveParams);
       }
     },
-    { role: 'close' }
+    { label: 'Закрыть', role: 'close' }
     ]
   };
 
   const editMenu : MenuItemConstructorOptions = {
-    label: 'Edit',
+    label: 'Редактирование',
     submenu: [{
-      label: 'Find',
+      label: 'Найти',
       accelerator: 'CommandOrControl+F',
       click: (item,win,key) => {
         // console.log("find");
@@ -43,27 +43,27 @@ export function createMenu(app: App, shell: Shell) {
   };
 
   const viewMenu : MenuItemConstructorOptions = {
-    label: 'View',
+    label: 'Вид',
     submenu: [
-      { role: 'togglefullscreen' },
+      { label : "Полноэкранный Режим",role: 'togglefullscreen' },
       { role: 'toggleDevTools' }
     ]
   }
   
   const winMenu: MenuItemConstructorOptions = isMac ? {
-    label: 'Window',
+    label: 'Окно',
     submenu: [
-      { role: 'minimize' },
+      { label : "Свернуть", role: 'minimize' },
       { type: 'separator' },
-      { role: 'front' },
+      { label : "На передний план", role: 'front' },
       { type: 'separator' },
-      { role: 'window' }
+      { label : "Окно", role: 'window' }
     ]
   } : {
-    label: 'Window',
+    label: 'Окно',
     submenu: [
-      { role: 'minimize' },
-      { role: 'close' }
+      { label : "Свернуть", role: 'minimize' },
+      { label : "Закрыть", role: 'close' }
     ]
   }
 

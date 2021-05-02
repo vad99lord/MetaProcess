@@ -35,14 +35,20 @@ function createSVGElement(svgName : string){
     return svgElem;
 }
 
-
+function translateStr(en : string, tranlationMap : Map<string,string>){
+    const translation = tranlationMap.get(en);
+    return translation ?? en;
+}
 function createTable(data: AttributeApiReturn<"getWorkspaces">) {
     const table = document.createElement('table');
     table.classList.add('table','table-hover');
     const tableHead = document.createElement('thead');
     tableHead.classList.add('thead-light');
     let row = document.createElement('tr');
-    for (let wpProp in _.assign(_.omit(_.first(data)!, ["id","isTreeMode"]),{"action" : {}})) {
+    const wpHeader = _.assign(_.omit(_.first(data)!, ["id","isTreeMode"]),{"action" : {}});
+    const translationHeader = new Map<string,string>([["name","название"],["createdAt", "создано"],["action","действие"]]);
+    const transHeader = _.mapKeys(wpHeader,(val,key)=>translateStr(key,translationHeader));
+    for (let wpProp in transHeader) {
         let cell = document.createElement('th');
         cell.scope = "col";
         cell.appendChild(document.createTextNode(wpProp));
@@ -77,7 +83,7 @@ function createRow(tableBody: HTMLTableSectionElement, wp: Workspace) {
     row.appendChild(cell);
 
     cell = document.createElement('td');
-    cell.appendChild(document.createTextNode(wp.createdAt.toDateString()));
+    cell.appendChild(document.createTextNode(wp.createdAt.toLocaleDateString()));
     row.appendChild(cell);
 
     cell = document.createElement('td');

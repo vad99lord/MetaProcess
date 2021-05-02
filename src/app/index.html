@@ -2,8 +2,7 @@
 <html>
 
 <head>
-    <!-- <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" /> -->
-    <link href="./css/custom.css" rel="stylesheet" />
+    <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <link href="./css/style.css" rel="stylesheet" />
     <link href="./css/scrollbar.css" rel="stylesheet" />
     <meta charset="UTF-8">
@@ -11,7 +10,7 @@
     ">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <!-- <script type="text/javascript" src="test.js" defer></script> -->
-    <title>MetaProcess</title>
+    <title>МетаПроцесс</title>
 </head>
 
 <body>
@@ -28,19 +27,19 @@
             <div class="row">
                 <div class="row text-center pb-3">
                     <div class="col">
-                        <h4>Edges</h4>
+                        <h4>Связи</h4>
                         <div class="btn-group">
-                        <button type="button" class="btn btn-primary" id="add edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add edge">
+                        <button type="button" class="btn btn-primary" id="add edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить связь">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#edge-plus"/>
                             </svg>
                         </button>
-                        <button type="button" class="btn btn-primary" id="add src edges" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add source edges">
+                        <button type="button" class="btn btn-primary" id="add src edges" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить связи с общим началом">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#edge-many"/>
                             </svg>
                             </button>
-                        <button type="button" class="btn btn-primary" id="delete edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete edge">
+                        <button type="button" class="btn btn-primary" id="delete edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить связь">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#edge-minus"/>
                             </svg>
@@ -48,14 +47,14 @@
                         </div>
                     </div>
                     <div class="col">
-                        <h4>Vertices</h4>
+                        <h4>Категории</h4>
                         <div class="btn-group">
-                            <button type="button" class="btn btn-primary" id="add vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="add vertex">
+                            <button type="button" class="btn btn-primary" id="add vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить категорию">
                                 <svg class="bi " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmark-plus"/>
                                 </svg>
                             </button>
-                            <button type="button" class="btn btn-primary" id="union parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="union to parent">
+                            <button type="button" class="btn btn-primary" id="union parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Объединить в мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmarks-union"/>
                                 </svg>
@@ -65,22 +64,22 @@
                                     <use xlink:href="../../icons/custom-icons.svg#check2"/>
                                 </svg>
                             </button> -->
-                            <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="include into parent">
+                            <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Включить в мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmarks"/>
                                 </svg>
                             </button>
-                            <button type="button" class="btn btn-primary"  id="delete vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="delete vertex">
+                            <button type="button" class="btn btn-primary"  id="delete vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmark-dash"/>
                                 </svg>
                             </button>
-                            <button type="button" class="btn btn-primary" id="remove parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="remove parent">
+                            <button type="button" class="btn btn-primary" id="remove parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmarks-dotted"/>
                                 </svg>
                             </button>
-                            <button type="button" class="btn btn-primary" id="clone elements" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="clone elements">
+                            <button type="button" class="btn btn-primary" id="clone elements" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Дублировать элементы">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                     <use xlink:href="../../icons/custom-icons.svg#bookmarks-copy"/>
                                 </svg>
@@ -88,14 +87,14 @@
                         </div>
                     </div>
                     <div class="col">
-                        <h4>Utils</h4>
+                        <h4>Инструменты</h4>
                         <div class="btn-group">
-                        <button type="button" class="btn btn-primary" id="zoom-fit" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="default zoom">
+                        <button type="button" class="btn btn-primary" id="zoom-fit" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Вписать все элементы">
                             <svg class="bi  " width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#zoom-init"/>
                             </svg>
                         </button>
-                        <button type="button" class="btn btn-primary" id="search-open" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="open search">
+                        <button type="button" class="btn btn-primary" id="search-open" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Открыть поиск">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
                                 <use xlink:href="../../icons/custom-icons.svg#search"/>
                             </svg>
@@ -107,16 +106,16 @@
             </div>
         </div>
         <div class="col d-flex flex-column justify-content-center align-items-center border-start">
-            <h4>Mode</h4>
+            <h4>Режим</h4>
             <div class="btn-group">
                 <input type="radio" class="btn-check" name="graph-mode" id="tree-mode" value="tree" autocomplete="off">
-                <label class="btn btn-outline-primary" for="tree-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="tree mode">
+                <label class="btn btn-outline-primary" for="tree-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Иерархия">
                     <svg class="bi  " width="1em" height="1em" fill="currentColor">
                         <use xlink:href="../../icons/custom-icons.svg#diagram-2"/>
                     </svg>
                 </label>
                 <input type="radio" class="btn-check" name="graph-mode" id="process-mode" value="process" autocomplete="off">
-                <label class="btn btn-outline-primary" for="process-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="process mode">
+                <label class="btn btn-outline-primary" for="process-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Процесс">
                     <svg class="bi  " width="1em" height="1em" fill="currentColor">
                         <use xlink:href="../../icons/custom-icons.svg#process"/>
                     </svg>
@@ -138,10 +137,10 @@
                 <div class="col h-50 custom-scroll overflow-auto border-bottom border-2" id="search-div"> 
                     <div class="input-group my-3">
                         <input type="text" id="search-text" class="form-control w-25" placeholder="Search">
-                        <label class="input-group-text" for="search-type">Mode</label>
+                        <label class="input-group-text" for="search-type">Режим</label>
                         <select class="form-select" id="search-type">
-                            <option selected value="docs">Docs</option>
-                            <option value="eles">Elements</option>
+                            <option selected value="docs">Документы</option>
+                            <option value="eles">Элементы</option>
                         </select>
                         <button class="btn btn-outline-secondary"  id="search-clear" type="button">
                             <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
@@ -154,7 +153,7 @@
                             </svg>
                         </button>
                         <div class="invalid-feedback">
-                            empty query
+                            Задан пустой запрос
                         </div>
                     </div>
                     <div id="search-table"></div>
@@ -181,7 +180,7 @@
                         </div>
                     </div>
         
-                    <div id="empty-search" class="d-none alert alert-info">no results found</div>
+                    <div id="empty-search" class="d-none alert alert-info">Результатов не найдено</div>
                     <div class="list-group w-100" id="collapse-parent"></div>
                 </div>
                 <div class="col h-50 overflow-auto custom-scroll border-top border-2" id="table-div">
@@ -217,7 +216,6 @@
     <div class="toast position-absolute bottom-0 end-0 m-3 text-white bg-danger border-0" id="toast" role="alert">
         <div class="d-flex">
           <div class="toast-body" id="toast-text">
-            Hello, world! This is a toast message.
           </div>
           <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>

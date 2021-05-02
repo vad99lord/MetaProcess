@@ -63,7 +63,7 @@ function saveWpName(){
 function saveWorkspace(){
   let savePromise = savePositions().then(()=>saveWpName());
   savePromise.then((wp)=>{
-      createToast("bg-success","workspace has been saved!");
+      createToast("bg-success","Проект успшено сохранен!");
   });
 }
 function closeWorkspace(){
@@ -320,13 +320,13 @@ function createToast(color : "bg-success"|"bg-danger", message : string){
 
 function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingular){
   if (!source.edgesTo(target).empty()||workSpace!.isTreeMode&&!target.edgesTo(source).empty()) {
-    createToast("bg-danger","edge is already presented");
+    createToast("bg-danger","Связь уже существует!");
     disableFuncMode();
     return;
   }
   if (source.same(target)) {
     // alert("can't make self loops");
-    createToast("bg-danger","can't make self loops");
+    createToast("bg-danger","Создание связи-петли невозможно!");
     disableFuncMode();
     return;
   }
@@ -518,7 +518,7 @@ function addSrcEdges(){
     }
     if (!src.edgesTo(dests).empty()||workSpace!.isTreeMode&&!src.edgesWith(dests).empty()) {
       // alert("edge is already presented");
-      createToast("bg-danger","edge is already presented");
+      createToast("bg-danger","Связь уже существует!");
       mainV = [];
       return;
     }
@@ -571,7 +571,7 @@ document.getElementById('add src edges')!.addEventListener('click',() => {
 });
 
 function addVertex(){
-  let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "testVertex",wpID : workSpace!.id}]};
+  let vetrexParams : VertexApi<"createVertex"> = {method : "createVertex", params : [{name : "категория",wpID : workSpace!.id}]};
   ipc.send<VertexApiReturn<"createVertex">>(QueryChannel.QEURY_CHANNEL, vetrexParams).then((vertex) => {
     //make sure added vertex is centered in visible model part
     const ex = cy.extent()
@@ -594,7 +594,7 @@ function unionParent(){
   let parents = nodes.parent();
   if (parents.size()>1){
       // alert("selected nodes have different parents!");
-      createToast("bg-danger","selected nodes have different parents");
+      createToast("bg-danger","Выбранные категории включены в разные мета-категории!");
       return;
   }
   let unionParentID : string | undefined;
@@ -607,7 +607,7 @@ function unionParent(){
 
   let unionParams : VertexApi<"unionParent"> = {
     method : "unionParent", 
-    params : [{unionName : "testUnionVertex",childrenID : childrenID, unionParentID : unionParentID, wpID : workSpace!.id}]};
+    params : [{unionName : "мета-категория",childrenID : childrenID, unionParentID : unionParentID, wpID : workSpace!.id}]};
   ipc.send<VertexApiReturn<"unionParent">>(QueryChannel.QEURY_CHANNEL, unionParams).then((unionParent) => {
     const parent = cy.add([
       { group: 'nodes', data: { id: unionParent.id, name : unionParent.name, parent : unionParentID}}
@@ -790,13 +790,13 @@ document.getElementById('update-elem-name')!.addEventListener('click',() => {
   let eles = cy.elements(":selected");
   if (eles.empty()){
       // alert("select element to update name!");
-      createToast("bg-danger","select element to update name");
+      createToast("bg-danger","Выберите элемент для обновления названия!");
       return;
   }
   else {
     if (eles.size()>1){
         // alert("select 1 element onlyto update name!");
-        createToast("bg-danger","select 1 element only to update name!");
+        createToast("bg-danger","Выберите только 1 элемент для обновления названия!");
         return;
     }
     else {
@@ -820,6 +820,11 @@ document.getElementById('update-elem-name')!.addEventListener('click',() => {
   }
 })
 
+function translateStr(en : string, tranlationMap : Map<string,string>){
+  const translation = tranlationMap.get(en);
+  return translation ?? en;
+}
+
 function createTable(data : AttributeApiReturn<"getElementDocuments">){
   const table = document.createElement('table');
   table.classList.add("table","table-hover","table-bordered","text-center");
@@ -827,7 +832,10 @@ function createTable(data : AttributeApiReturn<"getElementDocuments">){
   let row = document.createElement('tr');
   row.classList.add("d-flex","flex-wrap");
   //const colSizes = {name : 'col-4',fullPath : 'col-4',type : 'col-2',action : 'col-2'};
-  const docPropCols = _.zip(_.keys(_.assign(_.pick(data.documents[0],"name","fullPath","type"),{action:{}})),['col-4','col-4','col-2','col-2']);
+  const tabHeader = _.assign(_.pick(data.documents[0],"name","fullPath","type"),{action:{}});
+  const translationHeader = new Map<string,string>([["name","название"],["fullPath", "полный путь"],["type","тип"],["action","действие"]]);
+  const transHeader = _.mapKeys(tabHeader,(val,key)=>translateStr(key,translationHeader));
+  const docPropCols = _.zip(_.keys(transHeader),['col-4','col-4','col-2','col-2']);
   for (let docPropCol of docPropCols){
     let cell = document.createElement('th');
     cell.classList.add(docPropCol[1]!);
@@ -965,7 +973,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
                       let eles = cy.elements(":selected");
                       if (eles.empty() || eles.size() > 1){
                           // alert("select one element to update document!");
-                          createToast("bg-danger","select one element to update document!");
+                          createToast("bg-danger","Выберите 1 элемент для обновления связи с документом!");
                           return;
                       }
                       const elem : Element = {
@@ -1019,7 +1027,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
       let eles = cy.elements(":selected");
       if (eles.empty() || eles.size() > 1){
           // alert("select one element to untag document!");
-          createToast("bg-danger","select one element to untag document!");
+          createToast("bg-danger","Выберите один элемент для разрыва связи с документом!");
           return;
       }
       const ele : Element = {
@@ -1065,7 +1073,7 @@ function tagDocument(itemType : "File"|"Directory",fullPath : string){
     let edges = cy.edges(":selected");
     if (nodes.empty() && edges.empty()){
         // alert("choose edges or nodes to tag!");
-        createToast("bg-danger","edge is already presented");
+        createToast("bg-danger","Выберите элементы для привязки к документу");
         return;
     }
     const nodesID = nodes.map(function(ele){
@@ -1154,7 +1162,7 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
     const openBtn = document.createElement('button');
     openBtn.type = "button";
     openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
-    openBtn.innerText = "show element "; //or document
+    openBtn.innerText = "Выделить элемент "; //or document
     connectHtmlElement(openBtn,eleDocs.id);
     const openIcon = createSVGElement("box-arrow-up-right");
     openIcon.classList.add("wh-reset");
@@ -1425,7 +1433,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
     const openBtn = document.createElement('button');
     openBtn.type = "button";
     openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
-    openBtn.innerText = "show element "; //or document
+    openBtn.innerText = "Открыть документ "; //or document
     // connectHtmlDoc(openBtn,docEles.doc);
     connectButtonDoc(openBtn,docLink,docEles.doc);
     const openIcon = createSVGElement("box-arrow-up-right");
