@@ -277,11 +277,19 @@ export class AttributeApi_ {
     }
     
     public async findDocumentsElements(params: {searchName: string, wpID : string}){
-        const findArgs = {
-            where : {
+        const nameArgs = _.isEqual(params.searchName,"*") ? {} : {
+            OR : [{
                 name : {
-                    contains : params.searchName,
+                    contains : _.toLower(params.searchName),
+                }
+            },{
+                name : {
+                    contains : _.capitalize(params.searchName),
                 },
+            }]
+        }
+        let findArgs = {
+            where : {
                 OR : [{
                     vertices : {
                     some : {
@@ -312,6 +320,9 @@ export class AttributeApi_ {
                 }
             }
         };
+        if (!_.isNil(nameArgs.OR)){
+            findArgs = _.merge(findArgs,{where : nameArgs});
+        }
         let dirs = await prisma.directory.findMany(findArgs);
         let files = await prisma.file.findMany(findArgs);
         let docEles : DocumentElements[] = _.map(dirs,(dir)=> {

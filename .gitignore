@@ -6,3 +6,5 @@ dist/
 testFiles/
 *.db
 db.bat
+iconsBackup/
+icons/individual

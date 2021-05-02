@@ -22,7 +22,7 @@ ipcRenderer.on(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
   });
 
 function createSVGElement(svgName : string){
-    const svgIconsPath = "../../node_modules/bootstrap-icons/bootstrap-icons.svg";
+    const svgIconsPath = "../../icons/custom-icons.svg";
     const svgFullPath = svgIconsPath + "#" + svgName;
     const svgElem = document.createElementNS("http://www.w3.org/2000/svg",'svg');
     svgElem.classList.add('bi');

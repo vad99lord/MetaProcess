@@ -178,7 +178,8 @@ const cy = cytoscape({
       css: {
         'label': 'data(name)',
         'text-valign': 'top',
-        'text-halign': 'center'
+        'text-halign': 'center',
+        'shape' : 'round-tag'
       }
     },
     {
@@ -199,7 +200,8 @@ const cy = cytoscape({
     {
       selector: '.tree-edges',
       css: {
-        'target-arrow-shape': 'none'
+        'target-arrow-shape': 'none',
+        'label': ''
       }
     },
     {
@@ -235,7 +237,7 @@ const cy = cytoscape({
       css: {
         'background-color' : dangerColor,
         'line-color': dangerColor,
-        'target-arrow-color' : dangerColor
+        'target-arrow-color' : dangerColor,
       }
     }
   ],
@@ -329,7 +331,7 @@ function addEdge(source : cytoscape.NodeSingular, target : cytoscape.NodeSingula
     return;
   }
   let edgeParams : VertexApi<"createEdge"> = {method : "createEdge", params : 
-    [{name : "testEdge",startID : source.id(), endID : target.id(), wpID : workSpace!.id}]
+    [{startID : source.id(), endID : target.id(), wpID : workSpace!.id}]
   }
   ipc.send<VertexApiReturn<"createEdge">>(QueryChannel.QEURY_CHANNEL, edgeParams).then((edge) => {
     const cyEdge = cy.add([
@@ -528,7 +530,7 @@ function addSrcEdges(){
 
     let edgesParams : VertexApi<"createSourceEdges"> = {
       method : "createSourceEdges", 
-      params : [{name : "testEdge",startID : srcID, endID : destIDs, wpID : workSpace!.id}]};
+      params : [{startID : srcID, endID : destIDs, wpID : workSpace!.id}]};
     ipc.send<VertexApiReturn<"createSourceEdges">>(QueryChannel.QEURY_CHANNEL, edgesParams).then((edges) => {
       const cytoEdges = _.map(edges,(edge)=>{
         const ce : ElementDefinition = { 
@@ -1186,7 +1188,8 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
       eleItem.appendChild(docIconDiv);
       elesList.appendChild(eleItem);
 
-      connectHtmlDoc(eleItem,doc);
+      //connectHtmlDoc(eleItem,doc);
+      connectLiDoc(eleItem,doc);
     }); 
     cardDiv.appendChild(elesList);
     elesDiv.appendChild(cardDiv);
@@ -1210,6 +1213,66 @@ function connectHtmlElement(elem : HTMLElement, eleID : string){
   });
 }
 
+
+function replaceDocIcon(parent : HTMLElement, doc : Document){
+  const docIcon = createSVGElement(getDocIconName(doc));
+  docIcon.classList.add("bi-search");
+  const oldSvg = parent.querySelector("svg")!;
+  oldSvg.replaceWith(docIcon);
+}
+
+function connectButtonDoc(btn : HTMLButtonElement, parent: HTMLElement, doc :Document){
+  const btnErrorClass = "btn-outline-danger";
+  const parentErrorClass = "list-group-item-danger";
+  if (!doc.valid){
+    btn.classList.add(btnErrorClass);
+  }
+  btn.addEventListener('click',(e)=>{
+    let dialogParams : FileApi<"openFile"> = {
+      method : "openFile", 
+      params : [{doc : doc}]
+    };
+    ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+       if (!_.isEmpty(err)){
+          doc.valid = false;
+          btn.classList.add(btnErrorClass);
+          parent.classList.add(parentErrorClass);
+          replaceDocIcon(parent,doc);
+       }
+       else {
+          doc.valid = true;
+          btn.classList.remove(btnErrorClass);
+          parent.classList.remove(parentErrorClass);
+          replaceDocIcon(parent,doc);
+       }
+    });
+  });
+}
+
+function connectLiDoc(li : HTMLLIElement, doc :Document){
+  const liErrorClass = "list-group-item-danger";
+  if (!doc.valid){
+    li.classList.add(liErrorClass);
+  }
+  li.addEventListener('click',(e)=>{
+    let dialogParams : FileApi<"openFile"> = {
+      method : "openFile", 
+      params : [{doc : doc}]
+    };
+    ipc.send<FileApiReturn<"openFile">>(FileChannel.FILE_CHANNEL, dialogParams).then((err) => {
+       if (!_.isEmpty(err)){
+          doc.valid = false;
+          li.classList.add(liErrorClass);
+          replaceDocIcon(li,doc);
+       }
+       else {
+          doc.valid = true;
+          li.classList.remove(liErrorClass);
+          replaceDocIcon(li,doc);
+       }
+    });
+  });
+}
 
 function connectHtmlDoc(elem : HTMLElement, doc :Document){
   let errorClass : string;
@@ -1363,7 +1426,8 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
     openBtn.type = "button";
     openBtn.classList.add("btn","btn-sm","my-3","align-self-start");
     openBtn.innerText = "show element "; //or document
-    connectHtmlDoc(openBtn,docEles.doc);
+    // connectHtmlDoc(openBtn,docEles.doc);
+    connectButtonDoc(openBtn,docLink,docEles.doc);
     const openIcon = createSVGElement("box-arrow-up-right");
     openIcon.classList.add("wh-reset");
     openBtn.appendChild(openIcon);
@@ -1631,7 +1695,7 @@ document.getElementById('expand')!.addEventListener('click', () => {
 
 
 function createSVGElement(svgName : string){
-  const svgIconsPath = "../../node_modules/bootstrap-icons/bootstrap-icons.svg";
+  const svgIconsPath = "../../icons/custom-icons.svg";
   const svgFullPath = svgIconsPath + "#" + svgName;
   const svgElem = document.createElementNS("http://www.w3.org/2000/svg",'svg');
   svgElem.classList.add('bi');

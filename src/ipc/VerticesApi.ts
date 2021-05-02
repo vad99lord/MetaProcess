@@ -31,14 +31,25 @@ export class VertexApi_ {
     }
 
     public async findElements(params: {searchName: string, wpID : string}){
+        const nameArgs = _.isEqual(params.searchName,"*") ? {} : {
+            OR : [{
+                name : {
+                    contains : _.toLower(params.searchName),
+                }
+            },{
+                name : {
+                    contains : _.capitalize(params.searchName),
+                },
+            }]
+        }
         let findVArgs = {
             where : {
-                name : {
-                    contains : params.searchName,
-                },
                 workspaceID : params.wpID,
             }
         };
+        if (!_.isNil(nameArgs.OR)){
+            findVArgs = _.merge(findVArgs,{where : nameArgs});
+        }
         const verts = await prisma.vertex.findMany(findVArgs);
         let findEArgs = _.merge(findVArgs,{where : {inMeta : false}});
         const edges = await prisma.edge.findMany(findEArgs);
@@ -73,9 +84,10 @@ export class VertexApi_ {
     }
 
 
-    public async createSourceEdges(params: {name : string, startID : string, endID : string[], inMeta ?: boolean, wpID : string}){
-        const edges : EdgeData[] = _.map(params.endID,(eID)=>{
-            return {name : params.name,startID : params.startID,endID : eID};
+    public async createSourceEdges(params: {name ?: string, startID : string, endID : string[], inMeta ?: boolean, wpID : string}){
+        const name = !_.isNil(params.name) ? _.times(params.endID.length,_.constant(params.name)) : await this.createEdgesName(params.startID,params.endID);
+        const edges : EdgeData[] = _.map(params.endID,(eID,ind)=>{
+            return {name : name[ind],startID : params.startID,endID : eID};
         })
         return this.createManyEdges({edges : edges, inMeta : params.inMeta, wpID : params.wpID});
     }
@@ -109,10 +121,21 @@ export class VertexApi_ {
         return edges;    
     } 
 
-    public async createEdge(params: {name : string, startID : string, endID : string, inMeta ?: boolean, wpID : string}){
+    private async createEdgesName(startID: string, endId : string[]){
+        const src = await prisma.vertex.findUnique({where : {id : startID},select : {name : true}});
+        const dests = await prisma.vertex.findMany({where : {id : {in : endId}}, select : {name : true}});
+        const names = _.map(dests,(dest)=>{
+            const name = src!.name+"-"+dest.name;
+            return name;
+        })
+        return names;
+    }
+
+    public async createEdge(params: {name ?: string, startID : string, endID : string, inMeta ?: boolean, wpID : string}){
+        const name = params.name ?? _.first(await this.createEdgesName(params.startID,[params.endID]))!;
         const edge = await prisma.edge.create({
             data : {
-                name : params.name,
+                name : name,
                 startVertex : {
                     connect : {
                         id : params.startID
