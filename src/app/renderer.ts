@@ -59,7 +59,7 @@ function saveWpName(){
 function saveWorkspace(){
   let savePromise = savePositions().then(()=>saveWpName());
   savePromise.then((wp)=>{
-      createToast("bg-success","Проект успшено сохранен!");
+      createToast("bg-success","Проект успешно сохранен!");
   });
 }
 function closeWorkspace(){
@@ -468,7 +468,7 @@ function showHelpText(helpText : string){
 
 //const nodesConst : cytoscape.NodeSingular[] = [];
 function onAddEdge(){
-  showHelpText("Select first node:");
+  showHelpText("Выберите исходную категорию:");
   let nodes : cytoscape.NodeSingular[] = []
   let addEdgeCallback = function(evt : cytoscape.EventObject){
     nodes.push(evt.target);
@@ -478,7 +478,7 @@ function onAddEdge(){
       cy.removeListener('select','node',addEdgeCallback);
     }
     else{
-      showHelpText("Select second node:");
+      showHelpText("Выберите конечную категорию:");
     }
   }
   return addEdgeCallback;
@@ -498,7 +498,7 @@ function addSrcEdges(){
   if (_.isEmpty(mainV)){
     cy.one('select','node', (evt) => {
       mainV.push(evt.target);
-      showHelpText("Select dest nodes:");
+      showHelpText("Выберите конечные категории:");
       cy.one('select','node', (evt) => {
         setFuncBtn("add src edges");
       });
@@ -561,7 +561,7 @@ document.getElementById('add src edges')!.addEventListener('click',() => {
     cy.selectionType("single");
   });
   cy.elements(":selected").unselect();
-  showHelpText("Select source node:");
+  showHelpText("Выберите исходную категорию:");
   cy.selectionType("additive");
   addSrcEdges();
 });
@@ -625,7 +625,7 @@ document.getElementById('union parent')!.addEventListener('click',() => {
   });
   cy.elements(":selected").unselect();
   cy.one('select','node',selectListener); 
-  showHelpText("Select nodes:");
+  showHelpText("Выберите категории:");
   cy.selectionType("additive");
 	//unionParent();
 });
@@ -636,7 +636,7 @@ function includeParent(){
   if (_.isEmpty(mainParent)){
     cy.one('select','node', (evt) => {
       mainParent.push(evt.target);
-      showHelpText("Select child nodes:");
+      showHelpText("Выберите категории:");
       cy.one('select','node', (evt) => {
         setFuncBtn("include parent");
       });
@@ -682,7 +682,7 @@ document.getElementById('include parent')!.addEventListener('click',() => {
     cy.selectionType("single");
   });
   cy.elements(":selected").unselect();
-  showHelpText("Select parent node:");
+  showHelpText("Выберите мета-категорию:");
   cy.selectionType("additive");
   includeParent();
 });
@@ -716,7 +716,7 @@ document.getElementById('delete vertex')!.addEventListener('click',() => {
                        cy.selectionType("single");});
   cy.elements(":selected").unselect();
   cy.one('select','node',selectListener); 
-  showHelpText("Select nodes:");
+  showHelpText("Выберите категории:");
   cy.selectionType("additive");
 });
 
@@ -745,7 +745,7 @@ document.getElementById('delete edge')!.addEventListener('click',() => {
                        cy.selectionType("single");});
   cy.elements(":selected").unselect();
   cy.one('select','edge',selectListener); 
-  showHelpText("Select edges:");
+  showHelpText("Выберите связи:");
   cy.selectionType("additive");
   // removeEdge();
 });
@@ -777,7 +777,7 @@ document.getElementById('remove parent')!.addEventListener('click',() => {
                        cy.selectionType("single");});
   cy.elements(":selected").unselect();
   cy.one('select','$node > node',selectListener); 
-  showHelpText("Select parents:");
+  showHelpText("Выберите мета-категории:");
   cy.selectionType("additive");
 });
 
@@ -1586,7 +1586,7 @@ document.getElementById('clone elements')!.addEventListener('click',() => {
                        cy.selectionType("single");});
   cy.elements(":selected").unselect();
   cy.one('select','node',selectListener); 
-  showHelpText("Select nodes:");
+  showHelpText("Выберите категории:");
   cy.selectionType("additive");
   //cloneElements();
 });

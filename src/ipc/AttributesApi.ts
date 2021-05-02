@@ -33,7 +33,7 @@ export class AttributeApi_ {
 
     //TODO: check if coords copying is needed somewhere ??
     public async cloneElementsDocuments(params: {VIDs: string[], EIDs : string[], wpID : string} ){
-        const suffix = "_clone";
+        const suffix = "_копия";
         
         const sourceV = await prisma.vertex.findMany({
             where : {

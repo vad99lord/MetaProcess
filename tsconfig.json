@@ -3,10 +3,11 @@
     "inlineSourceMap": true,
     "inlineSources" : true,
     "outDir": "dist",
+    "rootDir": ".",
     "strict": true,
     "lib": ["esnext","DOM"],
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["src/**/*"]
 }
