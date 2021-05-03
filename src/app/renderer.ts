@@ -1116,7 +1116,7 @@ function createElementsDocsList(data : AttributeApiReturn<"findElementsDocuments
 
     const colEleIcon = document.createElement('div');
     colEleIcon.classList.add('col-auto');
-    const eleIconName = eleDocs.type==="Vertex" ? "bookmark" : "diagram-2";
+    const eleIconName = eleDocs.type==="Vertex" ? "bookmark" : "edge-plus";
     const docIcon = createSVGElement(eleIconName);
     docIcon.classList.add("bi-search");
     colEleIcon.appendChild(docIcon);
@@ -1444,7 +1444,7 @@ function createDocsElementsTable(data : AttributeApiReturn<"findDocumentsElement
       eleItem.classList.add("list-group-item","d-flex","justify-content-between",
       "align-items-center","list-group-item-action","cursor-pointer");
       eleItem.innerText=ele.name;
-      const eleIconName = ele.type==="Vertex" ? "bookmark" : "diagram-2";
+      const eleIconName = ele.type==="Vertex" ? "bookmark" : "edge-plus";
       const eleIcon = createSVGElement(eleIconName);
       expandIcon.classList.add("bi-search");
       connectHtmlElement(eleItem,ele.id);
