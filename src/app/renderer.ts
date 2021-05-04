@@ -4,7 +4,7 @@ import { QueryChannel } from "../ipc/QueryChannel";
 import {ElementDefinition} from 'cytoscape';
 import * as _ from "lodash";
 import cytoscape = require('cytoscape');
-import { AttributeApi, AttributeApiReturn,Document } from "../ipc/AttributesApi";
+import { AttributeApi, AttributeApiReturn,Document, ElementDocuments } from "../ipc/AttributesApi";
 import { AttributeChannel } from "../ipc/AttributesChannel";
 import { Element, ElementName, FileApi, FileApiReturn } from "../ipc/FilesApi";
 import { FileChannel } from "../ipc/FileChannel";
@@ -95,6 +95,7 @@ document.getElementById('reload')!.addEventListener('click', () => {
 
 let workSpace : Workspace | null = null;
 let cy : cytoscape.Core;
+let currentEle : cytoscape.SingularData | null = null
 const tapHandler = function(event : cytoscape.EventObject){
   let evtTarget = event.target;
   if (evtTarget === cy){
@@ -106,7 +107,7 @@ const tapHandler = function(event : cytoscape.EventObject){
   toggleFullSearch(false);
   toggleRightPane(true);
   const ele : cytoscape.SingularData = evtTarget;
-
+  currentEle = ele;
   let eleType : "Edge"|"Vertex" = ele.isNode() ? "Vertex" : "Edge";
   let attrParams : AttributeApi<"getElementDocuments"> = {
     method : "getElementDocuments", 
@@ -781,8 +782,13 @@ document.getElementById('remove parent')!.addEventListener('click',() => {
   cy.selectionType("additive");
 });
 
-
-document.getElementById('update-elem-name')!.addEventListener('click',() => {
+document.getElementById('elem-name')!.addEventListener('keydown',(e) => {
+  const key = e.key;
+  if (key === "Enter") {
+    updateName();
+  }
+})
+function updateName(){
   let eles = cy.elements(":selected");
   if (eles.empty()){
       // alert("select element to update name!");
@@ -814,6 +820,9 @@ document.getElementById('update-elem-name')!.addEventListener('click',() => {
         });
     }
   }
+}
+document.getElementById('update-elem-name')!.addEventListener('click',() => {
+  updateName();
 })
 
 function translateStr(en : string, tranlationMap : Map<string,string>){
@@ -1089,7 +1098,15 @@ function tagDocument(itemType : "File"|"Directory",fullPath : string){
     };
     ipc.send<FileApiReturn<"connectDocument">>(FileChannel.FILE_CHANNEL, docParams).then((doc) => {
         const tableBody = <HTMLTableSectionElement>document.getElementById('docs-table')!.getElementsByTagName('tbody')[0];
-        createRow(tableBody,doc!);
+        if (!_.isNil(tableBody)){
+          createRow(tableBody,doc!);
+        }
+        else {
+          if (_.isNil(currentEle)){
+            return;
+          }
+          cy.getElementById(currentEle.id()).emit('tap');
+        }  
     });
 
 }
