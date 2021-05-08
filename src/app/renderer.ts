@@ -833,8 +833,6 @@ function translateStr(en : string, tranlationMap : Map<string,string>){
 function createTable(data : AttributeApiReturn<"getElementDocuments">){
   const table = document.createElement('table');
   table.classList.add("table","table-hover","table-bordered","text-center");
-  table.style.width = "550px";
-  table.style.tableLayout = "fixed";
   const tableHead = document.createElement('thead');
   let row = document.createElement('tr');
   row.classList.add("d-flex","flex-wrap");

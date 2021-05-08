@@ -30,3 +30,8 @@ a:not(.collapsed) .bi-search {
   width: 1em;
   height: 1em;
 }
+
+#docs-table table{
+  width : 550px;
+  table-layout : fixed;
+}
