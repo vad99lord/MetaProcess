@@ -833,6 +833,8 @@ function translateStr(en : string, tranlationMap : Map<string,string>){
 function createTable(data : AttributeApiReturn<"getElementDocuments">){
   const table = document.createElement('table');
   table.classList.add("table","table-hover","table-bordered","text-center");
+  table.style.width = "550px";
+  table.style.tableLayout = "fixed";
   const tableHead = document.createElement('thead');
   let row = document.createElement('tr');
   row.classList.add("d-flex","flex-wrap");
@@ -958,7 +960,7 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
         if (!doc.valid){
             let dialogParams : FileApi<"openFileDialog"> = {
               method : "openFileDialog", 
-              params : [{type : doc.type==="Directory" ? "openDirectory": "openFile", title : "choose item to retag:"}]
+              params : [{type : doc.type==="Directory" ? "openDirectory": "openFile", title : "Выберите документ для перепривязки к элементу:"}]
             };
             ipc.send<FileApiReturn<"openFileDialog">>(FileChannel.FILE_CHANNEL, dialogParams).then((dialogReturn) => {
               if (dialogReturn.canceled){
@@ -1050,6 +1052,10 @@ function createRow(tableBody: HTMLTableSectionElement, doc : Document){
       ipc.send<FileApiReturn<"disconnectDocument">>(FileChannel.FILE_CHANNEL, disconnParams).then((doc) => {
            //console.log(doc);
            tableBody.removeChild(row);
+           if (!tableBody.hasChildNodes()){
+              const tableDiv = document.getElementById('docs-table')!;
+              tableDiv.innerHTML = "";
+           }
       });
     });
     tableBody.appendChild(row);

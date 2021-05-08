@@ -110,7 +110,7 @@ export class FileApi_ {
     }
 
     public async openFileDialog(params: {type: "openFile"|"openDirectory", title ?: string}){
-        const title = params.title ?? "Choose item to tag:";
+        const title = params.title ?? "Выберите документ для привязки к элементу:";
         let openDialogReturn = await dialog.showOpenDialog({
             title : title,
             properties: [params.type],
