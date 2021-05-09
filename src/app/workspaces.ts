@@ -1,4 +1,5 @@
 import { Workspace } from ".prisma/client";
+import { table } from "console";
 import { ipcRenderer } from 'electron';
 import * as _ from "lodash";
 import { AttributeApi, AttributeApiReturn } from "../ipc/AttributesApi";
@@ -95,38 +96,28 @@ function createRow(tableBody: HTMLTableSectionElement, wp: Workspace) {
             params: [{ wpID: wp.id }]
         };
         ipc.send<AttributeApiReturn<"deleteWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, delParams).then((wp) => {
-            console.log(wp);
             tableBody.removeChild(row);
+            if (!tableBody.hasChildNodes()){
+                setEmptyTable();
+            }
         });
     })
     cell.appendChild(delBtn);
     row.appendChild(cell);
-
-    /*row.addEventListener('click', (e) => {
-        //send wp to main window for opening
-        let openParams : WorkspaceApi<"createWorkspace"> = {method : "createWorkspace", params : [{wpID : wp.id}]}
-        ipc.send<WorkspaceApiReturn<"createWorkspace">>(WorkspaceChannel.WORKSPACE_CHANNEL, openParams);      
-    });*/
-    /*
-    row.addEventListener('contextmenu', (e) => {
-        let delParams: AttributeApi<"deleteWorkspace"> = {
-            method: "deleteWorkspace",
-            params: [{ wpID: wp.id }]
-        };
-        ipc.send<AttributeApiReturn<"deleteWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, delParams).then((wp) => {
-            console.log(wp);
-            tableBody.removeChild(row);
-        });
-    });*/
     tableBody.appendChild(row);
 }
 
 
 function getWorkspaces(){
     ipc.send<AttributeApiReturn<"getWorkspaces">>(AttributeChannel.ATTRIBUTE_CHANNEL, { method: "getWorkspaces", params: []}).then((wps) => {
+        setEmptyTable();
         const tableDiv = document.getElementById('wp-table')!;
-        tableDiv.innerHTML = "";
-        tableDiv.appendChild(createTable(wps));
+        if (!_.isEmpty(wps)){
+            setTable(createTable(wps));
+        }
+        else{
+            setEmptyTable();
+        }
     });
 }
 
@@ -135,12 +126,33 @@ getWorkspaces();
 document.getElementById('add-workspace')!.addEventListener('click',() => {
     addWorkspace();
   });
+ 
+function setEmptyTable() {
+    const tableDiv = document.getElementById('wp-table')!;
+    tableDiv.innerHTML = "";
+    const emptyStr = "Проекты пока не созданы...";
+    const emptyText = document.createElement("h4");
+    emptyText.innerText = emptyStr;
+    emptyText.classList.add("text-center","my-5");
+    tableDiv.appendChild(emptyText);
+}
+
+function setTable(table : HTMLTableElement) {
+    const tableDiv = document.getElementById('wp-table')!;
+    tableDiv.innerHTML = "";
+    tableDiv.appendChild(table);
+}
 
 function addWorkspace() {
-    const wpName = "MetaProcess_New";
+    const wpName = "МетаПроцесс";
     const createParams : AttributeApi<"createWorkspace"> = { method: "createWorkspace", params: [{name : wpName}]};
     ipc.send<AttributeApiReturn<"createWorkspace">>(AttributeChannel.ATTRIBUTE_CHANNEL, createParams).then((wp) => {
-        const tableBody = <HTMLTableSectionElement>document.getElementById('wp-table')!.getElementsByTagName('tbody')[0];
-        createRow(tableBody,wp);
+        const tableBody = document.getElementById('wp-table')!.getElementsByTagName('tbody')[0];
+        if (_.isNil(tableBody)){
+            setTable(createTable([wp]));
+        }
+        else {
+            createRow(tableBody,wp);
+        }
     });
 }

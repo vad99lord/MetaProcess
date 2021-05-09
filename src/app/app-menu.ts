@@ -1,4 +1,5 @@
 import { App, Menu, MenuItemConstructorOptions, Shell } from "electron";
+import _ from "lodash";
 import { IpcSender } from "../ipc/IpcSender";
 import { WorkspaceWinApi } from "../ipc/WorkspaceApi";
 import { WorkspaceChannel } from "../ipc/WorkspaceChannel";
@@ -45,11 +46,13 @@ export function createMenu(app: App, shell: Shell) {
   const viewMenu : MenuItemConstructorOptions = {
     label: 'Вид',
     submenu: [
-      { label : "Полноэкранный Режим",role: 'togglefullscreen' },
-      { role: 'toggleDevTools' }
+      { label : "Полноэкранный Режим",role: 'togglefullscreen' }
     ]
   }
-  
+  if (process.argv.includes("reload") || process.argv.includes("dev")){
+    (<MenuItemConstructorOptions[]>viewMenu.submenu!).push({ role: 'toggleDevTools' },{ role : 'reload'});
+  }
+    
   const winMenu: MenuItemConstructorOptions = isMac ? {
     label: 'Окно',
     submenu: [

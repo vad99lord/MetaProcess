@@ -16,14 +16,6 @@ import { WorkspaceApi, WorkspaceApiReturn, WorkspaceWinApi, WorkspaceWinApi_ } f
 import { ClassMethods } from "../ipc/RemoteApi";
 import Bootstrap from "bootstrap";
 import cuid = require("cuid");
-//const ipcRenderer : IpcRenderer  = require('electron').ipcRenderer;
-
-//TODO: REMOVE! DEBUG for reload after actions
-const {getCurrentWindow} = require('electron').remote;
-function reloadWindow(){
-  getCurrentWindow().reload();
-}
-
 
 const ipc = new IpcService(ipcRenderer);
 
@@ -87,10 +79,6 @@ ipcRenderer.on(WorkspaceChannel.WORKSPACE_CHANNEL,(ev,req)=>{
       break;
     };
   }
-});
-
-document.getElementById('reload')!.addEventListener('click', () => {
-  reloadWindow();
 });
 
 let workSpace : Workspace | null = null;

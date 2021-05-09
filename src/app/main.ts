@@ -13,7 +13,7 @@ import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
 import { createMenu } from './app-menu';
 
 //auto reload view from source changes, dev only
-if (_.isEqual(_.last(process.argv),"reload")){
+if (process.argv.includes("reload")){
     try {
       require('electron-reloader')(module)
     } catch (_) {}
@@ -64,7 +64,9 @@ export class Workspace implements WorkspaceApi_{
     });
     this.wpListWindow.loadFile('./src/app/workspaces.html');
     //no menu for start window
-    this.wpListWindow.removeMenu();
+    if (!process.argv.includes("reload") && !process.argv.includes("dev")){
+        this.wpListWindow.removeMenu();
+    }
     app.dock?.hide(); //hide menu bar for macOS  
     this.wpListWindow.once('ready-to-show', () => {
       this.wpListWindow!.show();

@@ -5,6 +5,7 @@
   "devDependencies": {
     "@types/lodash": "^4.14.168",
     "concurrently": "^6.0.2",
+    "electron-icon-maker": "0.0.5",
     "electron-reloader": "^1.2.0",
     "gulp-svg-sprite": "^1.5.0",
     "prisma": "2.17.0",
@@ -14,11 +15,13 @@
   "scripts": {
     "build": "tsc",
     "start": "npm run build && electron .",
+    "start-dev": "npm start dev",
     "start-reload": "npm start reload",
     "watch": "tsc -w",
     "dev": "concurrently 'npm:start-reload' 'npm:watch' ",
     "update-sprite": "svg-sprite --svg-namespace-classnames false -s --symbol-dest icons --symbol-sprite custom-icons.svg icons/individual/*.svg",
-    "build-css": "node-sass src/app/scss -o src/app/css"
+    "build-css": "node-sass src/app/scss -o src/app/css",
+    "make-app-icon": "./node_modules/.bin/electron-icon-maker --input=./icons/app/individual/metaprocess.png --output=./icons/app/"
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",
