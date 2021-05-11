@@ -60,8 +60,8 @@
     "update-sprite": "svg-sprite --svg-namespace-classnames false -s --symbol-dest icons --symbol-sprite custom-icons.svg icons/individual/*.svg",
     "build-css": "node-sass src/app/scss -o src/app/css",
     "make-app-icon": "./node_modules/.bin/electron-icon-maker --input=./icons/app/individual/metaprocess.png --output=./icons/app/",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "pack": "npm run build-no-map && electron-builder --dir",
+    "dist": "npm run build-no-map && electron-builder",
     "asar-unpack": "npx asar extract dist/win-unpacked/resources/app.asar dist/win-unpacked/resources/unpck"
   },
   "dependencies": {

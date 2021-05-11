@@ -4,7 +4,8 @@ dist/
 *.env*
 .VSCodeCounter/
 testFiles/
-*.db
+db/*
+!db/init
 db.bat
 iconsBackup/
 icons/individual
