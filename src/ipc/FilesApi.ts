@@ -5,6 +5,7 @@ import * as _ from "lodash";
 import path from 'path';
 import { Document, DocumentType } from './AttributesApi';
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
+import prisma from '../db/client';
 
 export interface FileApi<T extends ClassMethods<FileApi_>> extends RemoteApi{
     method : T,
@@ -20,7 +21,7 @@ export type ElementName = Prisma.VertexGetPayload<{
     select: { name: true }
   }> & ElementType
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 
 

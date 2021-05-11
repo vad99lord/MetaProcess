@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import { Element, ElementName, ElementType } from './FilesApi';
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
 import { VertexApi_ } from './VerticesApi';
+import prisma from '../db/client';
 
 
 export interface AttributeApi<T extends ClassMethods<AttributeApi_>> extends RemoteApi{
@@ -14,7 +15,7 @@ export type AttributeApiReturn<T extends keyof AttributeApi_> = Prisma.PromiseRe
 //export type VertexApiGenericReturn<T extends keyof VertexApi_> = ReturnType<typeof VertexApi_.prototype[T]>
 
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 
 export type ElementDocuments = Element & ElementName & {documents : Document[]}

@@ -4,6 +4,7 @@ import { ElementDefinition, Position } from 'cytoscape';
 import * as _ from "lodash";
 import { Element } from './FilesApi';
 import { ClassMethods, MethodArgumentTypes, RemoteApi } from './RemoteApi';
+import prisma from '../db/client';
 
 export interface VertexApi<T extends ClassMethods<VertexApi_>> extends RemoteApi{
     method : T,
@@ -20,7 +21,7 @@ export type EdgeData = Prisma.EdgeGetPayload<{
     select: { name: true, startID : true, endID : true}
   }>
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 
 export class VertexApi_ {
