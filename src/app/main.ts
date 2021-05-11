@@ -1,3 +1,4 @@
+require('hazardous'); //fix asar app paths
 import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron';
 import * as _ from "lodash";
 import { IpcChannelInterface } from ".././ipc/IpcChannelInterface";
@@ -11,14 +12,12 @@ import { QueryChannel } from '../ipc/QueryChannel';
 import { WorkspaceApi_, WorkspaceWinApi } from '../ipc/WorkspaceApi';
 import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
 import { createMenu } from './app-menu';
-
 //auto reload view from source changes, dev only
 if (process.argv.includes("reload")){
     try {
       require('electron-reloader')(module)
     } catch (_) {}
 }
-
 const openedWP = new Map<number,string>();
 
 export class Workspace implements WorkspaceApi_{

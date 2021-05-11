@@ -1,4 +1,4 @@
-import { Workspace } from ".prisma/client";
+import { Workspace } from "@prisma/client";
 import { table } from "console";
 import { ipcRenderer } from 'electron';
 import * as _ from "lodash";
