@@ -10,3 +10,4 @@ db.bat
 iconsBackup/
 icons/individual
 src/app/scss
+build/

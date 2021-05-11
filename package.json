@@ -9,6 +9,9 @@
   "build": {
     "appId": "com.vad99lord.meta-process",
     "productName": "МетаПроцесс",
+    "directories" : {
+      "output" : "build"
+    },
     "files": [
       "dist/src/**/*",
       "src/static/**/*",
