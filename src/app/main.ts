@@ -61,7 +61,7 @@ export class Workspace implements WorkspaceApi_{
       show : false,
       resizable: false
     });
-    this.wpListWindow.loadFile('./src/app/workspaces.html');
+    this.wpListWindow.loadFile('./src/static/html/workspaces.html');
     //no menu for start window
     if (!process.argv.includes("reload") && !process.argv.includes("dev")){
         this.wpListWindow.removeMenu();
@@ -121,7 +121,7 @@ export class Workspace implements WorkspaceApi_{
       show : false
     });
     //wpWin.webContents.openDevTools();
-    wpWin.loadFile('./src/app/index.html');
+    wpWin.loadFile('./src/static/html/index.html');
     // wpWin.removeMenu();
     wpWin.maximize();
     return wpWin;

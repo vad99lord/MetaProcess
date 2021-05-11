@@ -11,7 +11,7 @@
     "productName": "МетаПроцесс",
     "files": [
       "dist/src/**/*",
-      "src/app/**/!(*.ts)",
+      "src/static/**/*",
       "icons/custom-icons.svg",
       {
         "from": "node_modules/.prisma",

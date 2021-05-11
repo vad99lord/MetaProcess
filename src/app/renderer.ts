@@ -1708,7 +1708,7 @@ document.getElementById('expand')!.addEventListener('click', () => {
 
 
 function createSVGElement(svgName : string){
-  const svgIconsPath = "../../icons/custom-icons.svg";
+  const svgIconsPath = "../../../icons/custom-icons.svg";
   const svgFullPath = svgIconsPath + "#" + svgName;
   const svgElem = document.createElementNS("http://www.w3.org/2000/svg",'svg');
   svgElem.classList.add('bi');

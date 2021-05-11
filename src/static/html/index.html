@@ -2,9 +2,9 @@
 <html>
 
 <head>
-    <link href="../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
-    <link href="./css/style.css" rel="stylesheet" />
-    <link href="./css/scrollbar.css" rel="stylesheet" />
+    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <link href="../css/style.css" rel="stylesheet" />
+    <link href="../css/scrollbar.css" rel="stylesheet" />
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="
     ">
@@ -31,17 +31,17 @@
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary" id="add edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить связь">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#edge-plus"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#edge-plus"/>
                             </svg>
                         </button>
                         <button type="button" class="btn btn-primary" id="add src edges" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить связи с общим началом">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#edge-many"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#edge-many"/>
                             </svg>
                             </button>
                         <button type="button" class="btn btn-primary" id="delete edge" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить связь">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#edge-minus"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#edge-minus"/>
                             </svg>
                             </button>
                         </div>
@@ -51,37 +51,37 @@
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary" id="add vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Добавить категорию">
                                 <svg class="bi " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmark-plus"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmark-plus"/>
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-primary" id="union parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Объединить в мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-union"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmarks-union"/>
                                 </svg>
                             </button>
                             <!-- <button type="button" class="btn btn-success" id="success-btn">
                                 <svg width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#check2"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#check2"/>
                                 </svg>
                             </button> -->
                             <button type="button" class="btn btn-primary" id="include parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Включить в мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmarks"/>
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-primary"  id="delete vertex" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmark-dash"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmark-dash"/>
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-primary" id="remove parent" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Удалить мета-категорию">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-dotted"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmarks-dotted"/>
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-primary" id="clone elements" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Дублировать элементы">
                                 <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#bookmarks-copy"/>
+                                    <use xlink:href="../../../icons/custom-icons.svg#bookmarks-copy"/>
                                 </svg>
                             </button>
                         </div>
@@ -91,12 +91,12 @@
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary" id="zoom-fit" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Вписать все элементы">
                             <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#zoom-init"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#zoom-init"/>
                             </svg>
                         </button>
                         <button type="button" class="btn btn-primary" id="search-open" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Открыть поиск">
                             <svg class="bi" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#search"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#search"/>
                             </svg>
                         </button>
                         </div>
@@ -110,13 +110,13 @@
                 <input type="radio" class="btn-check" name="graph-mode" id="tree-mode" value="tree" autocomplete="off">
                 <label class="btn btn-outline-primary" for="tree-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Иерархия">
                     <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                        <use xlink:href="../../icons/custom-icons.svg#diagram-2"/>
+                        <use xlink:href="../../../icons/custom-icons.svg#diagram-2"/>
                     </svg>
                 </label>
                 <input type="radio" class="btn-check" name="graph-mode" id="process-mode" value="process" autocomplete="off">
                 <label class="btn btn-outline-primary" for="process-mode" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Процесс">
                     <svg class="bi  " width="1em" height="1em" fill="currentColor">
-                        <use xlink:href="../../icons/custom-icons.svg#process"/>
+                        <use xlink:href="../../../icons/custom-icons.svg#process"/>
                     </svg>
                 </label>
             </div>
@@ -143,12 +143,12 @@
                         </select>
                         <button class="btn btn-outline-secondary"  id="search-clear" type="button">
                             <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#x-circle"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#x-circle"/>
                             </svg>
                         </button>
                         <button class="btn btn-outline-success" id="search" type="button">
                             <svg class="bi wh-reset" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#search"/>
+                                <use xlink:href="../../../icons/custom-icons.svg#search"/>
                             </svg>
                         </button>
                         <div class="invalid-feedback">
@@ -161,19 +161,19 @@
                         <div class="btn-group me-auto">
                             <button type="button" class="btn btn-outline-primary" id="collapse">
                                 <svg class="bi bi-search wh-reset" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#arrows-collapse" />
+                                    <use xlink:href="../../../icons/custom-icons.svg#arrows-collapse" />
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-outline-primary" id="expand">
                                 <svg class="bi bi-search wh-reset" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#arrows-expand" />
+                                    <use xlink:href="../../../icons/custom-icons.svg#arrows-expand" />
                                 </svg>
                             </button>
                         </div>
                         <div class="btn-group">
                             <button type="button" class="btn btn-outline-secondary" id="clear-results">
                                 <svg class="bi bi-search wh-reset" fill="currentColor">
-                                    <use xlink:href="../../icons/custom-icons.svg#x-square" />
+                                    <use xlink:href="../../../icons/custom-icons.svg#x-square" />
                                 </svg>
                             </button>
                         </div>
@@ -189,7 +189,7 @@
                                 <input type="text" id="elem-name" class="form-control">
                                 <button class="btn btn-outline-success" id="update-elem-name" type="button">
                                     <svg class="bi wh-reset" width="1em" height="1em" fill="currentColor">
-                                        <use xlink:href="../../icons/custom-icons.svg#arrow-return-left" />
+                                        <use xlink:href="../../../icons/custom-icons.svg#arrow-return-left" />
                                     </svg>
                                 </button>
                             </div>
@@ -199,12 +199,12 @@
                     <div class="btn-group my-2" id="docs-ele-btns">
                         <button type="button" class="btn btn-outline-primary" id="open-file-dialog">
                             <svg class="bi bi-search wh-reset" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#file-earmark-plus" />
+                                <use xlink:href="../../../icons/custom-icons.svg#file-earmark-plus" />
                             </svg>
                         </button>
                         <button type="button" class="btn btn-outline-primary" id="open-dir-dialog">
                             <svg class="bi bi-search wh-reset" fill="currentColor">
-                                <use xlink:href="../../icons/custom-icons.svg#folder-plus" />
+                                <use xlink:href="../../../icons/custom-icons.svg#folder-plus" />
                             </svg>
                         </button>
                     </div>
@@ -220,10 +220,10 @@
         </div>
       </div>
 </div>
-<script src="../../node_modules/@popperjs/core/dist/umd/popper.js"></script>
+<script src="../../../node_modules/@popperjs/core/dist/umd/popper.js"></script>
 </body>
 <script>
-    require('../../dist/src/app/renderer.js')
+    require('../../../dist/src/app/renderer.js')
 </script>
 
 </html>
