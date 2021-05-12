@@ -19,6 +19,7 @@ if (process.argv.includes("reload")){
     } catch (_) {}
 }
 const openedWP = new Map<number,string>();
+console.log(app.getPath('appData'));
 
 export class Workspace implements WorkspaceApi_{
   private closeChan ?: CloseChannel;
@@ -62,6 +63,7 @@ export class Workspace implements WorkspaceApi_{
       resizable: false
     });
     this.wpListWindow.loadFile('./src/static/html/workspaces.html');
+    this.wpListWindow.webContents.openDevTools();
     //no menu for start window
     if (!process.argv.includes("reload") && !process.argv.includes("dev")){
         this.wpListWindow.removeMenu();
@@ -120,7 +122,7 @@ export class Workspace implements WorkspaceApi_{
       },
       show : false
     });
-    //wpWin.webContents.openDevTools();
+    wpWin.webContents.openDevTools();
     wpWin.loadFile('./src/static/html/index.html');
     // wpWin.removeMenu();
     wpWin.maximize();

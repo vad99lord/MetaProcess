@@ -33,6 +33,17 @@
     "win": {
       "icon": "icons/app/icons/win/icon.ico"
     },
+    "linux": {
+      "target": "deb",
+      "asarUnpack": [
+        "node_modules/.prisma/**/*"
+      ],
+      "category": "Utility"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icons/app/icons/mac/icon.icns"
+    },
     "publish": null
   },
   "devDependencies": {
@@ -66,7 +77,7 @@
     "make-app-icon": "./node_modules/.bin/electron-icon-maker --input=./icons/app/individual/metaprocess.png --output=./icons/app/",
     "pack": "npm run build-no-map && electron-builder --dir",
     "dist": "npm run build-no-map && electron-builder",
-    "asar-unpack": "npx asar extract dist/win-unpacked/resources/app.asar dist/win-unpacked/resources/unpck"
+    "asar-unpack": "npx asar extract build/linux-unpacked/resources/app.asar build/linux-unpacked/resources/unpck"
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",
@@ -74,6 +85,7 @@
     "bootstrap": "^5.0.0-beta3",
     "cuid": "^2.1.8",
     "cytoscape": "^3.18.1",
+    "dotenv": "^9.0.2",
     "hazardous": "^0.3.0",
     "lodash": "^4.17.21"
   },
