@@ -24,7 +24,8 @@
           "**/*"
         ]
       },
-      "db/MetaProcess.db"
+      "db/MetaProcess.db",
+      ".env"
     ],
     "asarUnpack" : [
       "node_modules/@prisma/**/*",

@@ -1,3 +1,5 @@
+import * as dotenv from "dotenv";
+dotenv.config(); //get env variables
 require('hazardous'); //fix asar app paths
 import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron';
 import * as _ from "lodash";
@@ -12,6 +14,7 @@ import { QueryChannel } from '../ipc/QueryChannel';
 import { WorkspaceApi_, WorkspaceWinApi } from '../ipc/WorkspaceApi';
 import { WorkspaceChannel } from '../ipc/WorkspaceChannel';
 import { createMenu } from './app-menu';
+
 //auto reload view from source changes, dev only
 if (process.argv.includes("reload")){
     try {
@@ -19,7 +22,6 @@ if (process.argv.includes("reload")){
     } catch (_) {}
 }
 const openedWP = new Map<number,string>();
-console.log(app.getPath('appData'));
 
 export class Workspace implements WorkspaceApi_{
   private closeChan ?: CloseChannel;

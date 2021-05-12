@@ -1054,7 +1054,6 @@ function openDialog(itemType : "openFile"|"openDirectory"){
   };
   ipc.send<FileApiReturn<"openFileDialog">>(FileChannel.FILE_CHANNEL, dialogParams).then((dialogReturn) => {
      if (dialogReturn.canceled){
-       console.log("dialog cancelled");
        return;
      }
      //console.log(dialogReturn.filePaths[0]);
