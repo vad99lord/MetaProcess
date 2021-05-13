@@ -1,13 +1,13 @@
 node_modules/
 dist/
 .vscode/
-# *.env*
 .VSCodeCounter/
 testFiles/
-db/*
-!db/init
+db/
+!db/*.db
 db.bat
 iconsBackup/
 icons/individual
 src/app/scss
 build/
+db-tests/
