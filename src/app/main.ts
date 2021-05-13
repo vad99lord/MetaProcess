@@ -60,7 +60,6 @@ export class Workspace implements WorkspaceApi_{
       title: `Yet another Electron Application`,
       webPreferences: {
         nodeIntegration: true, // makes it possible to use `require` within our index.html
-        enableRemoteModule : true, // remove remove after debugging!
       },
       show : false,
       resizable: false
@@ -120,7 +119,6 @@ export class Workspace implements WorkspaceApi_{
       title: `Yet another Electron Application`,
       webPreferences: {
         nodeIntegration: true, // makes it possible to use `require` within our index.html
-        enableRemoteModule : true, // remove remove after debugging!
       },
       show : false
     });
