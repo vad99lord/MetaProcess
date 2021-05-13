@@ -3,8 +3,8 @@ dist/
 .vscode/
 .VSCodeCounter/
 testFiles/
-db/
-!db/*.db
+db/**/*
+!db/**/*.db
 db.bat
 iconsBackup/
 icons/individual
