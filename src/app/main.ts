@@ -1,7 +1,8 @@
-import * as dotenv from "dotenv";
-dotenv.config(); //get env variables
-require('hazardous'); //fix asar app paths
 import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron';
+import * as dotenv from "dotenv";
+import path from "path"
+dotenv.config({path: path.join(app.getAppPath(),".env")}); //get env variables
+require('hazardous'); //fix asar app paths
 import * as _ from "lodash";
 import { IpcChannelInterface } from ".././ipc/IpcChannelInterface";
 import { AttributeApi_ } from '../ipc/AttributesApi';
@@ -65,7 +66,6 @@ export class Workspace implements WorkspaceApi_{
       resizable: false
     });
     this.wpListWindow.loadFile('./src/static/html/workspaces.html');
-    this.wpListWindow.webContents.openDevTools();
     //no menu for start window
     if (!process.argv.includes("reload") && !process.argv.includes("dev")){
         this.wpListWindow.removeMenu();
@@ -124,7 +124,6 @@ export class Workspace implements WorkspaceApi_{
       },
       show : false
     });
-    wpWin.webContents.openDevTools();
     wpWin.loadFile('./src/static/html/index.html');
     // wpWin.removeMenu();
     wpWin.maximize();

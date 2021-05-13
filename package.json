@@ -78,7 +78,7 @@
     "make-app-icon": "./node_modules/.bin/electron-icon-maker --input=./icons/app/individual/metaprocess.png --output=./icons/app/",
     "pack": "npm run build-no-map && electron-builder --dir",
     "dist": "npm run build-no-map && electron-builder",
-    "asar-unpack": "npx asar extract build/linux-unpacked/resources/app.asar build/linux-unpacked/resources/unpck"
+    "asar-unpack": "npx asar extract build/win-unpacked/resources/app.asar build/win-unpacked/resources/unpck"
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",

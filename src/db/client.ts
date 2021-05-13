@@ -3,9 +3,9 @@ import { app } from "electron";
 import { constants as fsContants} from 'fs';
 import path from "path";
 import fs from "fs";
-import url from 'url';
 
-function createUrlPrisma(url : string){
+function createUrlPrisma(path : string){
+    const url = "file:"+path;
     const prisma = new PrismaClient({
         datasources: {
           db: {
@@ -31,7 +31,7 @@ function createPrisma(){
             fs.copyFileSync(envDbPath,appDataDbPath);
         }
         finally {
-            prisma = createUrlPrisma(url.pathToFileURL(appDataDbPath).toString());
+            prisma = createUrlPrisma(appDataDbPath);
         }
     }
     else {
