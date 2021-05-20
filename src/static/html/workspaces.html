@@ -23,6 +23,32 @@
             </button>
         </div>
     </div>
+    <div class="position-fixed bottom-0 end-0 p-3">
+        <button type="button" id="add-workspdfsdface" data-bs-toggle="modal" data-bs-target="#aboutModal" class="btn btn-outline-secondary">
+            <svg class="bi" width="1em" height="1em" fill="currentColor">
+                <use xlink:href="../../../icons/custom-icons.svg#info-circle"/>
+            </svg>
+        </button>
+    </div>
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">О разработчиках</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="../img/info-avatar.svg" width="200" height="200" class="m-3">
+                <p class="fw-bold">Труфанов Вадим</p>
+                <p class="fw-bold">ИУ5-83Б</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script src="../../../node_modules/bootstrap/dist/js/bootstrap.js"></script>
 </body>
 <script>
     require('../../../dist/src/app/workspaces.js')
