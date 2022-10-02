@@ -2,6 +2,8 @@
 
 Diploma project repository.
 
+Organize files by semantics with a visual graph representation of a special kind.
+
 ## List of techs
 
 1. [Electron](https://www.electronjs.org/)
@@ -35,7 +37,7 @@ After OS installation database file may be replcaed with a custom one at the app
 
 Currently available prebuild installers:
 
-| OS            | Version       |
-| ------------- |:-------------:|
-| Win 10        | 1.0.0         |
-| Ubuntu 16.04  | 1.0.0         |
+| OS           | Version |
+| ------------ | :-----: |
+| Win 10       |  1.0.0  |
+| Ubuntu 16.04 |  1.0.0  |
