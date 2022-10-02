@@ -41,3 +41,9 @@ Currently available prebuild installers:
 | ------------ | :-----: |
 | Win 10       |  1.0.0  |
 | Ubuntu 16.04 |  1.0.0  |
+
+## Screens:
+
+![product screen 1](imgs/product_screen1.png)
+
+![product screen 2](imgs/product_screen2.png)
